@@ -33,13 +33,13 @@ class run_GUI(GUI.GUI):
         #---- extract port numbers for config.json
         with open('./config/config.json') as json_file:
             ports = json.load(json_file)
-
+        #assign port numbers to the hardware
         print('ports:', ports)
         TEC_PORT = ports['TEC']
         PUMP1_PORT = ports['PUMP1']
         MOTOR1_PORT = ports['MOTOR1']
-
         print('tec port:', TEC_PORT, '  ,  motor1 port:', MOTOR1_PORT, '  , pump1:', PUMP1_PORT)
+        # Display port numbers on the GUI (config tab)
         self.Ltecport.config(text=TEC_PORT)
         self.Lpump1port.config(text=PUMP1_PORT)
         self.Lmotor1port.config(text=MOTOR1_PORT)
@@ -48,22 +48,23 @@ class run_GUI(GUI.GUI):
         #------ init. motor 1
         print("Initializing Motors.....")
         self.motor1 = Motor1.motor_1(0,1.5)
-        print("Motors Initialized")
+        print("\tMotors Initialized")
 
         #------ init. Pump 1
-        # print(" Initializing Pumps/Valves.....",end=' ')
+        # print(" Initializing Pumps/Valves.....")
         # self.pump1 = P.Pump("COM6")
-        # print(" Pumps initialized")
+        # print("\tPumps initialized")
         # self.pump1.pump_Zinit(1)
         # initialize labjack
-        print(" Initializing Labjack.....",end=' ')
+        print(" Initializing Labjack.....")
         self.labjack = u6.U6()
         self.labjack.writeRegister(50590, 15)        
-        print('labjack initialized')
+        print('\tlabjack initialized')
         # #------ Starts timer
         print('starting internal timer')
         self.timer = threading.Timer(1.0, self.timerCallback_1)
         self.timer.start()
+        print('\tInternal timer started')
         self.scalefactor = 1
         # self.microstep = False         
         # self.pump_scale_factor(1)
