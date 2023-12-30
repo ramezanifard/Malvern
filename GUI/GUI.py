@@ -287,12 +287,12 @@ class GUI():
             self.v1_cur_pos.place(x =XX1 + XX2-14,y = Y1 + dY1)  
             Label(self.tab1, text = "New Pos",font=Font1 , bg=Color1,
                   fg='black').place(x = XX1,y = Y1 + 2*dY1)  
-            self.combo1 = ttk.Combobox(self.tab1,  width=15, font=Font6)
+            self.combo1 = ttk.Combobox(self.tab1,  width=17, font=Font6)
             # self.combo1['values'] = (" I"," O"," B"," E")
             self.combo1['values'] = ("Pump to Air (P1)","Air to Gas (P2)","Gas to Line (P3)",
                                     "Line to Pump (P4)")
             self.combo1.current(0)
-            self.combo1.place(x = XX1 + XX2-20,y = Y1 + 2*dY1)
+            self.combo1.place(x = XX1 + XX2-32,y = Y1 + 2*dY1)
             self.combo1.bind("<<ComboboxSelected>>", self.checkCombo1)  
             
             yy = 125
@@ -304,10 +304,11 @@ class GUI():
                                     font=Font1 ).place(x =XX1 + XX2,y = yy+Y1 + dY1)  
             Label(self.tab1, text = "New Pos",font=Font1 , bg=Color1,
                   fg='black').place(x = XX1,y = yy+Y1 + 2*dY1)  
-            self.combo3 = ttk.Combobox(self.tab1,  width=3, font=Font6)
-            self.combo3['values'] = (1,2,3,4,5,"Text")
-            self.combo3.current(3)
-            self.combo3.place(x = XX1 + XX2,y =yy+ Y1 + 2*dY1)
+            self.combo3 = ttk.Combobox(self.tab1,  width=17, font=Font6)
+            self.combo3['values'] = ("Pump to Line (P1)","Line to Gas (P2)","Gas to Air (P3)",
+                                    "Air to Pump (P4)")
+            self.combo3.current(0)
+            self.combo3.place(x = XX1 + XX2-32,y =yy+ Y1 + 2*dY1)
             self.combo3.bind("<<ComboboxSelected>>", self.checkCombo3) 
             
             yy = 125*2
@@ -319,14 +320,14 @@ class GUI():
                                     font=Font1 ).place(x =XX1 + XX2, y = yy+Y1 + dY1)  
             Label(self.tab1, text = "New Pos",font=Font1 , bg=Color1,
                   fg='black').place(x = XX1,y = yy+Y1 + 2*dY1)  
-            self.combo5 = ttk.Combobox(self.tab1,  width=3, font=Font6)
-            self.combo5['values'] = (1,2,3,4,5,"Text")
-            self.combo5.current(3)
-            self.combo5.place(x = XX1 + XX2,y =yy+ Y1 + 2*dY1)
+            self.combo5 = ttk.Combobox(self.tab1,  width=17, font=Font6)
+            self.combo5['values'] = ("Titrant Port (P1)","Reservois (P2)","Titrant Cannula(P3)")
+            self.combo5.current(0)
+            self.combo5.place(x = XX1 + XX2-32,y =yy+ Y1 + 2*dY1)
             self.combo5.bind("<<ComboboxSelected>>", self.checkCombo5) 
             
             yy = 125*3
-            Label(self.tab1, text = "7: CLEANING VALVE",font=Font5 , bg=Color1,
+            Label(self.tab1, text = "9: CLEANING VALVE",font=Font5 , bg=Color1,
                   fg=Title_mid).place(x = XX1+0,y = yy+Y1-10)  
             Label(self.tab1, text = "Current Pos",font=Font1 , bg=Color1,
                   fg='black').place(x = XX1,y = yy+Y1 + dY1)  
@@ -334,10 +335,11 @@ class GUI():
                                     font=Font1 ).place(x =XX1 + XX2,y = yy+Y1 + dY1)  
             Label(self.tab1, text = "New Pos",font=Font1 , bg=Color1,
                   fg='black').place(x = XX1,y = yy+Y1 + 2*dY1)  
-            self.combo9 = ttk.Combobox(self.tab1,  width=3, font=Font6)
-            self.combo9['values'] = (1,2,3,4,5,"Text")
+            self.combo9 = ttk.Combobox(self.tab1,  width=17, font=Font6)
+            self.combo9['values'] = ("Air (P1)", "MeOH (P2)", "Detergent (P3)", "DI Water (P4)", 
+                                     "Waster (P5)","Cleaning Port (P6)")
             self.combo9.current(3)
-            self.combo9.place(x = XX1 + XX2,y =yy+ Y1 + 2*dY1)
+            self.combo9.place(x = XX1 + XX2-32,y =yy+ Y1 + 2*dY1)
             self.combo9.bind("<<ComboboxSelected>>", self.checkCombo9) 
             
             #--------------------- COLUMN 4:   VALVES 2, 4, 6, 7, 8 --------------------
@@ -389,7 +391,7 @@ class GUI():
             self.combo6.bind("<<ComboboxSelected>>", self.checkCombo6) 
             
             yy = 125*3
-            Label(self.tab1, text = "8: DEGASSER VALVE",font=Font5 , bg=Color1,
+            Label(self.tab1, text = "7: DEGASSER VALVE",font=Font5 , bg=Color1,
                   fg=Title_mid).place(x = dx_t2 -1,y=yy+Y1-10)  
             Label(self.tab1, text = "Current Pos",font=Font1 , bg=Color1,
                   fg='black').place(x = dx_t2,y = yy+Y1 + dY1)  
@@ -404,7 +406,7 @@ class GUI():
             self.combo7.bind("<<ComboboxSelected>>", self.checkCombo7) 
             
             yy = 125*4
-            Label(self.tab1, text = "9: CLEANING VALVE",font=Font5 , bg=Color1,
+            Label(self.tab1, text = "8: CLEANING VALVE",font=Font5 , bg=Color1,
                   fg=Title_mid).place(x = dx_t2 +0,y=yy+Y1-10)  
             Label(self.tab1, text = "Current Pos",font=Font1 , bg=Color1,
                   fg='black').place(x = dx_t2,y = yy+Y1 + dY1)  
@@ -623,17 +625,22 @@ class GUI():
             self.lbs12.place_forget()
             self.lbs13.place_forget()
             self.lbs14.place_forget()
-            # dd=50
-            # self.led_arrow_1  = Label(self.tab1, image=icon_arrow)
-            # self.led_arrow_1.image = icon_arrow
-            # self.led_arrow_1.place(x = X3-20,y = Y1 + 0*dY1)
-            
-            # led_on_14.place_forget()
+
+
+
+
+
+
+
+
+
+            #---------------------------------------------------------------------------
             # #---------------------  MOTORS TAB ---------------------------------------
+            #---------------------------------------------------------------------------
             # # Create a canvas widget
             self.canvas2=Canvas(self.tab2, width=1200, height=800,bg=Color1)
             self.canvas2.pack()
-            # Add a line in self.canvas2 widget
+            # Add a few lines in self.canvas2 widget
             self.canvas2.create_line(0,30,1200,30, fill='gray', width=1)
             self.canvas2.create_line(300,30,300,800, fill='gray', width=1)
             self.canvas2.create_line(600,30,600,800, fill='gray', width=1)
@@ -675,22 +682,36 @@ class GUI():
             self.combo_mh.place(x = XX1 + XX2,y = Y1 + 2*dY1)
             Button(self.tab2, bg=Color2, fg=Color3,text="set", 
                   command=self.checkCombo_mh).place(x = XX1 + XX2+50,y = Y1 + 2*dY1 - 2)
+            
             #--------------------- COLUMN 3: Gantry vertical ---------------------------------------
             XX1 = 650
+            delta = 50
             Label(self.tab2, text = "GANTRY VER.",font=Font4 , bg=Color1,
                   fg=Title_large).place(x = XX1-0,y = 40)  
-            Label(self.tab2, text = "Current Spd",font=Font1 , bg=Color1,
+            Label(self.tab2, text = "Current Pos",font=Font1 , bg=Color1,
                   fg='black').place(x = XX1,y = Y1 + dY1)  
             self.m3_cur_spd = Label(self.tab2, text = "----",
-                                    font=Font1 ).place(x =XX1 + XX2,y = Y1 + dY1)  
-            Label(self.tab2, text = "New Spd",font=Font1 , bg=Color1,
+                                    font=Font1 )
+            self.m3_cur_spd.pack()
+            self.m3_cur_spd.place(x =XX1 + XX2+ delta,y = Y1 + dY1)  
+            Label(self.tab2, text = "New Relative Pos.",font=Font1 , bg=Color1,
                   fg='black').place(x = XX1,y = Y1 + 2*dY1)  
-            self.combo_mv = ttk.Combobox(self.tab2,  width=2, font=Font6)
-            self.combo_mv['values'] = (1,2,3,4,5,"Text")
-            self.combo_mv.current(3)
-            self.combo_mv.place(x = XX1 + XX2,y = Y1 + 2*dY1)
+            
+
+            self.ent_gnt_ver_rel = Entry(self.tab2, width=5,font=Font1) 
+            self.ent_gnt_ver_rel.pack()
+            self.ent_gnt_ver_rel.place(x = XX1 + XX2+ delta,y = Y1 + 2*dY1)
             Button(self.tab2, bg=Color2, fg=Color3,text="set", 
-                  command=self.checkCombo_mv).place(x = XX1 + XX2+50,y = Y1 + 2*dY1 - 2)
+                  command=self.gantry_vertical_set_rel_click).place(x = XX1 + XX2+55+ delta,y = Y1 + 2*dY1 - 2)
+
+            Label(self.tab2, text = "New Absolute Pos.",font=Font1 , bg=Color1,
+                  fg='black').place(x = XX1,y = Y1 + 3*dY1)  
+            self.ent_gnt_ver_abs = Entry(self.tab2, width=5,font=Font1) 
+            self.ent_gnt_ver_abs.pack()
+            self.ent_gnt_ver_abs.place(x = XX1 + XX2+ delta,y = Y1 + 3*dY1)
+            Button(self.tab2, bg=Color2, fg=Color3,text="set", 
+                  command=self.gantry_vertical_set_abs_click).place(x = XX1 + XX2+55+ delta,y = Y1 + 3*dY1 - 2)
+            
 
             #--------------------- COLUMN 4: TEC controller ---------------------------------------
             XX1 = 950
@@ -746,7 +767,7 @@ class GUI():
             dY1 = 40
             XX1 = 80 # first col. of labels
             Y1 = 120
-            XX2 = 240 # second col of labels
+            XX2 = 250 # second col of labels
 
             Label(self.tab3, text = "PORT ASSINGMENT",font=Font4 , bg=Color1,
                   fg=Title_large).place(x = XX1,y=Y1-80)  
@@ -764,12 +785,20 @@ class GUI():
             self.Lpump1port.pack()
             self.Lpump1port.place(x = XX1+XX2,y = Y1+2*dY1)
             
-            Label(self.tab3, text = "MOTOR1 Port:",font=Font3 , bg=Color1,
+            Label(self.tab3, text = "TECHNOSFOT Port:",font=Font3 , bg=Color1,
                   fg='black').place(x = XX1,y = Y1+4*dY1)  
-            self.Lmotor1port = Label(self.tab3, text = "----",font='sans 15 italic' , bg=Color1,
+            self.Ltechnosoftport = Label(self.tab3, text = "----",font='sans 15 italic' , bg=Color1,
                                     fg='green')
-            self.Lmotor1port.pack()
-            self.Lmotor1port.place(x = XX1+XX2,y = Y1+4*dY1)
+            self.Ltechnosoftport.pack()
+            self.Ltechnosoftport.place(x = XX1+XX2,y = Y1+4*dY1)
+
+            Label(self.tab3, text = "Vertical Gantry Axis ID:",font=Font3 , bg=Color1,
+                  fg='black').place(x = XX1,y = Y1+6*dY1)  
+            self.Lver_gant_axis_id = Label(self.tab3, text = "----",font='sans 15 italic' , bg=Color1,
+                                    fg='green')
+            self.Lver_gant_axis_id.pack()
+            self.Lver_gant_axis_id.place(x = XX1+XX2,y = Y1+6*dY1)
+
 
             # Clock.schedule_interval(self.timerCallback_1, .5)
             # self.timer = threading.Timer(1.0, self.timerCallback_1)
@@ -938,18 +967,14 @@ class GUI():
             #     print("nut a number")
 
       def checkCombo_mh(self):
-            print('-->'+self.combo_mh.get())
+            print('parent-->'+self.combo_mh.get())
 
-      def checkCombo_mv(self):
-            print('-->'+self.combo_mv.get())
+      def gantry_vertical_set_rel_click(self):
+            print('parent-->'+self.ent_gnt_ver_rel.get())
 
+      def gantry_vertical_set_abs_click(self):
+            print('parent-->'+self.ent_gnt_ver_abs.get())
 
-      # def p1_ustep(self):
-      #     print('------------', self.chk_state)
-      #     if (self.chk_state.get() == 0 ):
-      #         print("unckecked ...")            
-      #     else:
-      #         print("ckecked...")
         
         
 

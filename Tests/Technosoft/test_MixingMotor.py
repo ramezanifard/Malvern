@@ -9,7 +9,7 @@ mydll1 =CDLL("./TML_LIB.dll")
 AXIS_ID_01 = 24
 POWER_ON = 1
 
-fd = mydll1.TS_OpenChannel(b"COM7",0, AXIS_ID_01, 115200)
+fd = mydll1.TS_OpenChannel(b"COM6",0, AXIS_ID_01, 115200)
 print("result:", fd)
 
 

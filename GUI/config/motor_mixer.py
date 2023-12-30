@@ -5,7 +5,7 @@ AXIS_ID_01 = 24
 POWER_ON = 1
 POWER_OFF =0
 
-class motor_1():
+class motor_mixer():
     def __init__(self, speed, acceleration):
         self.speed = speed
         self.acceleration = acceleration

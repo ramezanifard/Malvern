@@ -1,6 +1,7 @@
 import GUI
 from tkinter import * 
 import config.motor_1 as Motor1
+import config.motor_Linear as Motor_VG
 import config.Pump as P
 import time
 import u6
@@ -30,32 +31,56 @@ BS14_THRESHOLD = 2.5  #Threshold value for bubble sensor 14
 class run_GUI(GUI.GUI):
     def __init__(self,root):
         super().__init__( root)
-        #---- extract port numbers for config.json
+        print("Port Assignment Started ------------------------------------------")
+        # #---- extract port numbers for config.json
         with open('./config/config.json') as json_file:
             ports = json.load(json_file)
         #assign port numbers to the hardware
-        print('ports:', ports)
+        # print('ports:', ports)
         TEC_PORT = ports['TEC']
         PUMP1_PORT = ports['PUMP1']
-        MOTOR1_PORT = ports['MOTOR1']
-        print('tec port:', TEC_PORT, '  ,  motor1 port:', MOTOR1_PORT, '  , pump1:', PUMP1_PORT)
-        # Display port numbers on the GUI (config tab)
+        TECHNOSOFT_PORT = ports['TECHNOSOFT']
+        # GANTRY_VER_AXIS_ID = 255
+        GANTRY_VER_AXIS_ID = int(ports['GANTRY_VER_AXIS_ID'])        
+        print('\tTEC port:', TEC_PORT, '\n\tTechnosoft port:',TECHNOSOFT_PORT
+              , '\n\tpump1:', PUMP1_PORT,'\n\tGantry Vertical Axis ID:', GANTRY_VER_AXIS_ID)
+        print("Port Assignment done")
+        # # Display port numbers on the GUI (config tab)
         self.Ltecport.config(text=TEC_PORT)
         self.Lpump1port.config(text=PUMP1_PORT)
-        self.Lmotor1port.config(text=MOTOR1_PORT)
+        self.Ltechnosoftport.config(text=TECHNOSOFT_PORT)
+        self.Lver_gant_axis_id.config(text=GANTRY_VER_AXIS_ID)
 
-        print("Initializing hardware ----------------------------------------------")
-        #------ init. motor 1
-        print("Initializing Motors.....")
-        self.motor1 = Motor1.motor_1(0,1.5)
-        print("\tMotors Initialized")
+        print("Initializing hardware --------------------------------------------")
+        # #------ init. motor 1
+        # print("Initializing Motors.....")
+        # self.motor1 = Motor1.motor_1(0,1.5)
+        # print("\tMotors Initialized")
 
-        #------ init. Pump 1
-        # print(" Initializing Pumps/Valves.....")
-        # self.pump1 = P.Pump("COM6")
-        # print("\tPumps initialized")
-        # self.pump1.pump_Zinit(1)
-        # initialize labjack
+        # #------ init. motors: Gantry vertical 
+        print("Initializing Gantry Vertical Actuator.....")        
+        self.motor_gv = Motor_VG.motor_Linear(TECHNOSOFT_PORT.encode('ascii'),
+                                              GANTRY_VER_AXIS_ID, b"LEFS25")    
+        # self.motor_gv = Motor_VG.motor_Linear(b"COM6", 255, b"LEFS25")    
+        #/*	Setup and initialize the axis */	
+        if (self.motor_gv.InitAxis()==False):
+            print("Failed to start up the drive")    
+        print("\tGantry Vertical Actuator Initialized")        
+        tt =self.motor_gv.set_position()
+        if (tt==True):
+            print("\tcurrent position is set as referece for Gantry Vertical")
+        else:
+            print("\t Failed to set position")
+        
+        
+            
+
+        # #------ init. Pump 1
+        # # print(" Initializing Pumps/Valves.....")
+        # # self.pump1 = P.Pump("COM6")
+        # # print("\tPumps initialized")
+        # # self.pump1.pump_Zinit(1)
+        # # initialize labjack
         print(" Initializing Labjack.....")
         self.labjack = u6.U6()
         self.labjack.writeRegister(50590, 15)        
@@ -64,36 +89,42 @@ class run_GUI(GUI.GUI):
         print('starting internal timer')
         self.timer = threading.Timer(1.0, self.timerCallback_1)
         self.timer.start()
-        print('\tInternal timer started')
-        self.scalefactor = 1
-        # self.microstep = False         
-        # self.pump_scale_factor(1)
-        # print('mircostep off')
-        # self.set_step_mode(False)
-        self.BS= 1        
+        # print('\tInternal timer started')
+        # self.scalefactor = 1
+        # # self.microstep = False         
+        # # self.pump_scale_factor(1)
+        # # print('mircostep off')
+        # # self.set_step_mode(False)
+        # self.BS= 1        
 
-        # # ------create object of TEC5 
-        # # print("----------------------------------------------")
-        # self.mc = TEC.MeerstetterTEC("COM5")
-        # print(self.mc.get_data())
-        # # print(self.mc.set_temp(35.3))
-        # # print("----------------------------------------------")
-        # # #-------- set the motor1 speed to 0
-        # valid = self.motor1.set_speed(0)
-        # time.sleep(.25)
-        # if (valid == True):
-        #     self.m1_cur_spd.config(text="0")        
+        # # # ------create object of TEC5 
+        # # # print("----------------------------------------------")
+        # # self.mc = TEC.MeerstetterTEC("COM5")
+        # # print(self.mc.get_data())
+        # # # print(self.mc.set_temp(35.3))
+        # # # print("----------------------------------------------")
+        # # # #-------- set the motor1 speed to 0
+        # # valid = self.motor1.set_speed(0)
+        # # time.sleep(.25)
+        # # if (valid == True):
+        # #     self.m1_cur_spd.config(text="0")        
 
-        # #------ init valve 1 to 'E' 
-        # self.pump1.set_valve(1, 'E')
-        # time.sleep(.75)
-        # self.v1_cur_pos.config(text = "Pump to Air (P1)")
-
+        # # #------ init valve 1 to 'E' 
+        # # self.pump1.set_valve(1, 'E')
+        # # time.sleep(.75)
+        # # self.v1_cur_pos.config(text = "Pump to Air (P1)")
+        print("Hardware initialiation done")
+        print("------------------------------------------------------------------")
+        print('System started successfully.')
+        print("Please use the GUI to enter a commamnd ...")
 
 
 
 
     def timerCallback_1(self):  
+        global BS1_THRESHOLD, BS2_THRESHOLD, BS3_THRESHOLD, BS4_THRESHOLD, BS5_THRESHOLD
+        global BS6_THRESHOLD, BS7_THRESHOLD, BS8_THRESHOLD, BS9_THRESHOLD, BS10_THRESHOLD
+        global BS11_THRESHOLD, BS12_THRESHOLD, BS13_THRESHOLD, BS14_THRESHOLD
         # print('--->timer tick')
         #------------------------------- update pump 1 position
         # p1_cur_pos = self.pump1.get_plunger_position(1)            
@@ -116,6 +147,10 @@ class run_GUI(GUI.GUI):
         # self.tec_cur_tmp.config(text=str(obj_temp))
         # self.tec_desired_tmp.config(text=str(target_temp))
         
+        p= self.motor_gv.read_actual_position()
+        self.m3_cur_spd.config(text = p)  
+
+
         # #------------------------------- read bubble sensor and update the LEDs
         input0 = (self.labjack.getAIN(0))
         input1 = (self.labjack.getAIN(1))
@@ -268,6 +303,46 @@ class run_GUI(GUI.GUI):
         #------------------------------- repeat the timer
         self.timer = threading.Timer(1.0, self.timerCallback_1)
         self.timer.start()
+
+
+
+
+
+    def gantry_vertical_set_rel_click(self):
+        s = self.ent_gnt_ver_rel.get()
+        # print('child-->'+s)
+        if (is_float(s) == True):
+            # print('it\'s a number:', float(s))
+            #print("----------MOVE Relative-----------------")
+            speed = 15.0;	
+            acceleration = 1.0#
+            rel_pos =int(s)
+            self.motor_gv.set_POSOKLIM(1)
+
+            self.motor_gv.move_relative_position(rel_pos, speed, acceleration)
+
+        else:
+            print("not a number")
+
+
+
+    def gantry_vertical_set_abs_click(self):
+
+        s = self.ent_gnt_ver_abs.get()
+        # print('child-->'+s)
+        if (is_float(s) == True):
+            # print('it\'s a number:', float(s))
+            #print("----------MOVE Absolute-----------------")
+            speed = 15.0;	
+            acceleration = 1.0#
+            abs_pos =int(s)
+            self.motor_gv.set_POSOKLIM(1)
+
+            self.motor_gv.move_absolute_position(abs_pos, speed, acceleration)
+
+        else:
+            print("not a number")        
+        
 
 
 
