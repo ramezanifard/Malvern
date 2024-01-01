@@ -8,7 +8,7 @@ import u6
 import threading
 import config.MeerstetterTEC as TEC
 import json
-
+import logging
 
 #------------------- Constants -----------------------------------------
 BS1_THRESHOLD = 2.5  #Threshold value for bubble sensor 1
@@ -25,120 +25,79 @@ BS11_THRESHOLD = 2.5  #Threshold value for bubble sensor 11
 BS12_THRESHOLD = 2.5  #Threshold value for bubble sensor 12
 BS13_THRESHOLD = 2.5  #Threshold value for bubble sensor 13
 BS14_THRESHOLD = 2.5  #Threshold value for bubble sensor 14
-##--------------------------------------------------------------------------
+#---------------------------------------------------------------------------
+
 
 
 class run_GUI(GUI.GUI):
+
     def __init__(self,root):
         super().__init__( root)
-        print("Port Assignment Started ------------------------------------------")
-        # #---- extract port numbers for config.json
-        with open('./config/config.json') as json_file:
-            ports = json.load(json_file)
-        #assign port numbers to the hardware
-        # print('ports:', ports)
-        TEC_PORT = ports['TEC']
-        PUMP1_PORT = ports['PUMP1']
-        TECHNOSOFT_PORT = ports['TECHNOSOFT']
-        # GANTRY_VER_AXIS_ID = 255
-        GANTRY_VER_AXIS_ID = int(ports['GANTRY_VER_AXIS_ID'])        
-        print('\tTEC port:', TEC_PORT, '\n\tTechnosoft port:',TECHNOSOFT_PORT
-              , '\n\tpump1:', PUMP1_PORT,'\n\tGantry Vertical Axis ID:', GANTRY_VER_AXIS_ID)
-        print("Port Assignment done")
-        # # Display port numbers on the GUI (config tab)
-        self.Ltecport.config(text=TEC_PORT)
-        self.Lpump1port.config(text=PUMP1_PORT)
-        self.Ltechnosoftport.config(text=TECHNOSOFT_PORT)
-        self.Lver_gant_axis_id.config(text=GANTRY_VER_AXIS_ID)
-
-        print("Initializing hardware --------------------------------------------")
-        # #------ init. motor 1
-        # print("Initializing Motors.....")
-        # self.motor1 = Motor1.motor_1(0,1.5)
-        # print("\tMotors Initialized")
-
-        # #------ init. motors: Gantry vertical 
-        print("Initializing Gantry Vertical Actuator.....")        
-        self.motor_gv = Motor_VG.motor_Linear(TECHNOSOFT_PORT.encode('ascii'),
-                                              GANTRY_VER_AXIS_ID, b"LEFS25")    
-        # self.motor_gv = Motor_VG.motor_Linear(b"COM6", 255, b"LEFS25")    
-        #/*	Setup and initialize the axis */	
-        if (self.motor_gv.InitAxis()==False):
-            print("Failed to start up the drive")    
-        print("\tGantry Vertical Actuator Initialized")        
-        tt =self.motor_gv.set_position()
-        if (tt==True):
-            print("\tcurrent position is set as referece for Gantry Vertical")
-        else:
-            print("\t Failed to set position")
+        # logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(
+            level=logging.DEBUG,
+            #format="%(asctime)s %(levelname)s %(message)s",
+            format="%(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+            #filename="basic.log"
+        )
         
+        logging.info("Initializing hardware -------------------------------------")
+        self.PortAssignment()
+        self.InitMixerMotor()
+        self.InitGantryVertical()            
+        self.InitPump1()
+        self.InitLabjack()
+        self.InitTecController()
+        self.InitTimer()
+        logging.info("Hardware initialiation done")        
+
+        #------------ Setting the inital states/values of the hardware ----------------------
+        # # self.scalefactor = 1
+        # # # self.microstep = False         
+        # # # self.pump_scale_factor(1)
+        # # # logging.info('mircostep off')
+        # # # self.set_step_mode(False)
+        # # self.BS= 1        
+
         
-            
+        # logging.info(self.mc.set_temp(35.3))
+        # logging.info("----------------------------------------------")
 
-        # #------ init. Pump 1
-        # # print(" Initializing Pumps/Valves.....")
-        # # self.pump1 = P.Pump("COM6")
-        # # print("\tPumps initialized")
-        # # self.pump1.pump_Zinit(1)
-        # # initialize labjack
-        print(" Initializing Labjack.....")
-        self.labjack = u6.U6()
-        self.labjack.writeRegister(50590, 15)        
-        print('\tlabjack initialized')
-        # #------ Starts timer
-        print('starting internal timer')
-        self.timer = threading.Timer(1.0, self.timerCallback_1)
-        self.timer.start()
-        # print('\tInternal timer started')
-        # self.scalefactor = 1
-        # # self.microstep = False         
-        # # self.pump_scale_factor(1)
-        # # print('mircostep off')
-        # # self.set_step_mode(False)
-        # self.BS= 1        
+        # # # # #-------- set the motor1 speed to 0
+        # # # valid = self.motor1.set_speed(0)
+        # # # time.sleep(.25)
+        # # # if (valid == True):
+        # # #     self.m1_cur_spd.config(text="0")        
 
-        # # # ------create object of TEC5 
-        # # # print("----------------------------------------------")
-        # # self.mc = TEC.MeerstetterTEC("COM5")
-        # # print(self.mc.get_data())
-        # # # print(self.mc.set_temp(35.3))
-        # # # print("----------------------------------------------")
-        # # # #-------- set the motor1 speed to 0
-        # # valid = self.motor1.set_speed(0)
-        # # time.sleep(.25)
-        # # if (valid == True):
-        # #     self.m1_cur_spd.config(text="0")        
-
-        # # #------ init valve 1 to 'E' 
-        # # self.pump1.set_valve(1, 'E')
-        # # time.sleep(.75)
-        # # self.v1_cur_pos.config(text = "Pump to Air (P1)")
-        print("Hardware initialiation done")
-        print("------------------------------------------------------------------")
-        print('System started successfully.')
-        print("Please use the GUI to enter a commamnd ...")
-
-
-
+        # # # #------ init valve 1 to 'E' 
+        # # # self.pump1.set_valve(1, 'E')
+        # # # time.sleep(.75)
+        # # # self.v1_cur_pos.config(text = "Pump to Air (P1)")
+        
+        logging.info("------------------------------------------------------------------")
+        logging.info('System started successfully.')
+        logging.info("Please use the GUI to enter a commamnd ...")
+        
 
     def timerCallback_1(self):  
         global BS1_THRESHOLD, BS2_THRESHOLD, BS3_THRESHOLD, BS4_THRESHOLD, BS5_THRESHOLD
         global BS6_THRESHOLD, BS7_THRESHOLD, BS8_THRESHOLD, BS9_THRESHOLD, BS10_THRESHOLD
         global BS11_THRESHOLD, BS12_THRESHOLD, BS13_THRESHOLD, BS14_THRESHOLD
-        # print('--->timer tick')
+        # logging.info('--->timer tick')
         #------------------------------- update pump 1 position
         # p1_cur_pos = self.pump1.get_plunger_position(1)            
         # p1_cur_pos = int(p1_cur_pos / self.scalefactor)
         # self.p1_cur_pos.config(text = str(p1_cur_pos))
-        # # print('cur pos:', p1_cur_pos)
+        # # logging.info('cur pos:', p1_cur_pos)
     
         # #------------------------------- update  of TEC controller parameters
-        # # print(self.mc.get_data())
+        # # logging.info(self.mc.get_data())
         # tec_dic =  self.mc.get_data()
         # obj_temp = round(tec_dic['object temperature'][0], 1)
         # target_temp = round(tec_dic['target object temperature'][0], 1)
         # TEC_cur_status = tec_dic['loop status'][0]
-        # # print('--->', float(obj_temp), '   ,  ', target_temp, ' status:',TEC_cur_status)
+        # # logging.info('--->', float(obj_temp), '   ,  ', target_temp, ' status:',TEC_cur_status)
         # # 1: ON, 0:OFF, 
         # if (TEC_cur_status== 1):            
         #     self.t_status.config(text = "ON")                        
@@ -147,32 +106,80 @@ class run_GUI(GUI.GUI):
         # self.tec_cur_tmp.config(text=str(obj_temp))
         # self.tec_desired_tmp.config(text=str(target_temp))
         
+        #-------- update Gantry vertical motor position on GUI ------------------
         p= self.motor_gv.read_actual_position()
         self.m3_cur_spd.config(text = p)  
 
+        #-------- read bubble sensor and update the GUI -------------------------
+        self.read_BubbleSensors()      
+        self.update_BubbleSensorLEDs()                  
 
-        # #------------------------------- read bubble sensor and update the LEDs
-        input0 = (self.labjack.getAIN(0))
-        input1 = (self.labjack.getAIN(1))
-        input2 = (self.labjack.getAIN(2))
-        input3 = (self.labjack.getAIN(3))
-        input4 = (self.labjack.getAIN(4))
-        input5 = (self.labjack.getAIN(5))
-        input6 = (self.labjack.getAIN(6))
-        input7 = (self.labjack.getAIN(7))
-        input8 = (self.labjack.getAIN(8))
-        input9 = (self.labjack.getAIN(9))
-        input10 = (self.labjack.getAIN(10))
-        input11 = (self.labjack.getAIN(11))
-        input12 = (self.labjack.getAIN(12))
-        input13 = (self.labjack.getAIN(13))
-        # print("AI0={:0.2f}".format(input0))        
+        #-------- repeat the timer ----------------------------------------------
+        self.timer = threading.Timer(1.0, self.timerCallback_1)
+        self.timer.start()
+
+
+    def InitPump1(self):        
+        # # #------ init. Pump 1
+        # # # logging.info(" Initializing Pumps/Valves.....")
+        # # # self.pump1 = P.Pump("COM6")
+        # # # logging.info("\tPumps initialized")
+        # # # self.pump1.pump_Zinit(1)
+        pass
+
+
+    def InitLabjack(self):
+        # # initialize labjack
+        logging.info("Initializing Labjack.....")
+        self.labjack = u6.U6()
+        self.labjack.writeRegister(50590, 15)        
+        logging.info('\tlabjack initialized')
+        # pass
+
+    def InitTimer(self):
+        # #------ Starts timer
+        logging.info('starting internal timer')
+        self.timer = threading.Timer(1.0, self.timerCallback_1)
+        self.timer.start()
+        logging.info('\tInternal timer started')
+        #pass
+
+    def InitTecController(self):
+        # ------create object of TEC5 
+        logging.info("Initialzing TEC Temperature Controller---------------------")
+        # self.mc = TEC.MeerstetterTEC("COM5")
+        self.mc = TEC.MeerstetterTEC(self.TEC_PORT)
+        # logging.info(self.mc.get_data())
+        logging.info("\tTEC controller initialized ")
+
+
+
+    def read_BubbleSensors(self):
+        # read bubble sensor and update the LEDs
+        self.BS0 = (self.labjack.getAIN(0))
+        self.BS1 = (self.labjack.getAIN(1))
+        self.BS2 = (self.labjack.getAIN(2))
+        self.BS3 = (self.labjack.getAIN(3))
+        self.BS4 = (self.labjack.getAIN(4))
+        self.BS5 = (self.labjack.getAIN(5))
+        self.BS6 = (self.labjack.getAIN(6))
+        self.BS7 = (self.labjack.getAIN(7))
+        self.BS8 = (self.labjack.getAIN(8))
+        self.BS9 = (self.labjack.getAIN(9))
+        self.BS10 = (self.labjack.getAIN(10))
+        self.BS11 = (self.labjack.getAIN(11))
+        self.BS12 = (self.labjack.getAIN(12))
+        self.BS13 = (self.labjack.getAIN(13))
+
+
+    def update_BubbleSensorLEDs(self):
+        # Update The GUI with current value of bubble sensors
         X3 = 1050
         Y1 = 100
         dY1 = 40
         dd=50
 
-        if (input0 < BS1_THRESHOLD):
+        if (self.BS0 < BS1_THRESHOLD):
             self.led_on_1.place_forget()
             self.led_off_1.pack()
             self.led_off_1.place(x = X3+50,y = Y1 + 0*dY1)
@@ -181,7 +188,7 @@ class run_GUI(GUI.GUI):
             self.led_on_1.pack()            
             self.led_on_1.place(x = X3+50,y = Y1 + 0*dY1)
 
-        if (input1 < BS2_THRESHOLD):
+        if (self.BS1 < BS2_THRESHOLD):
             self.led_on_2.place_forget()
             # self.led_off_14.pack()
             self.led_off_2.place(x = X3+50,y = Y1 + 1*dY1)
@@ -190,7 +197,7 @@ class run_GUI(GUI.GUI):
             # self.led_on_14.pack()            
             self.led_on_2.place(x = X3+50,y = Y1 + 1*dY1)
 
-        if (input2 < BS3_THRESHOLD):
+        if (self.BS2 < BS3_THRESHOLD):
             self.led_on_3.place_forget()
             # self.led_off_14.pack()
             self.led_off_3.place(x = X3+50,y = Y1 + 2*dY1)
@@ -199,7 +206,7 @@ class run_GUI(GUI.GUI):
             # self.led_on_14.pack()            
             self.led_on_3.place(x = X3+50,y = Y1 + 2*dY1)
 
-        if (input3 < BS4_THRESHOLD):
+        if (self.BS3 < BS4_THRESHOLD):
             self.led_on_4.place_forget()
             # self.led_off_14.pack()
             self.led_off_4.place(x = X3+50,y = Y1 + 3*dY1)
@@ -208,7 +215,7 @@ class run_GUI(GUI.GUI):
             # self.led_on_14.pack()            
             self.led_on_4.place(x = X3+50,y = Y1 + 3*dY1)
 
-        if (input4 < BS5_THRESHOLD):
+        if (self.BS4 < BS5_THRESHOLD):
             self.led_on_5.place_forget()
             # self.led_off_14.pack()
             self.led_off_5.place(x = X3+50,y = Y1 + 4*dY1)
@@ -217,7 +224,7 @@ class run_GUI(GUI.GUI):
             # self.led_on_14.pack()            
             self.led_on_5.place(x = X3+50,y = Y1 + 4*dY1)
             
-        if (input5 < BS6_THRESHOLD):
+        if (self.BS5 < BS6_THRESHOLD):
             self.led_on_6.place_forget()
             # self.led_off_14.pack()
             self.led_off_6.place(x = X3+50,y = Y1 + 5*dY1)
@@ -226,7 +233,7 @@ class run_GUI(GUI.GUI):
             # self.led_on_14.pack()            
             self.led_on_6.place(x = X3+50,y = Y1 + 5*dY1)
 
-        if (input6 < BS7_THRESHOLD):
+        if (self.BS6 < BS7_THRESHOLD):
             self.led_on_7.place_forget()
             # self.led_off_14.pack()
             self.led_off_7.place(x = X3+50,y = Y1 + 6*dY1)
@@ -235,7 +242,7 @@ class run_GUI(GUI.GUI):
             # self.led_on_14.pack()            
             self.led_on_7.place(x = X3+50,y = Y1 + 6*dY1)
         
-        if (input7 < BS8_THRESHOLD):
+        if (self.BS7 < BS8_THRESHOLD):
             self.led_on_8.place_forget()
             # self.led_off_14.pack()
             self.led_off_8.place(x = X3+50,y = Y1 + 7*dY1)
@@ -244,7 +251,7 @@ class run_GUI(GUI.GUI):
             # self.led_on_14.pack()            
             self.led_on_8.place(x = X3+50,y = Y1 + 7*dY1)
 
-        if (input8 < BS9_THRESHOLD):
+        if (self.BS8 < BS9_THRESHOLD):
             self.led_on_9.place_forget()
             # self.led_off_14.pack()
             self.led_off_9.place(x = X3+50,y = Y1 + 8*dY1)
@@ -253,7 +260,7 @@ class run_GUI(GUI.GUI):
             # self.led_on_14.pack()            
             self.led_on_9.place(x = X3+50,y = Y1 + 8*dY1)
 
-        if (input9< BS10_THRESHOLD):
+        if (self.BS9< BS10_THRESHOLD):
             self.led_on_10.place_forget()
             # self.led_off_14.pack()
             self.led_off_10.place(x = X3+50,y = Y1 + 9*dY1)
@@ -262,7 +269,7 @@ class run_GUI(GUI.GUI):
             # self.led_on_14.pack()            
             self.led_on_10.place(x = X3+50,y = Y1 + 9*dY1)
 
-        if (input10 < BS11_THRESHOLD):
+        if (self.BS10 < BS11_THRESHOLD):
             self.led_on_11.place_forget()
             # self.led_off_14.pack()
             self.led_off_11.place(x = X3+50,y = Y1 + 10*dY1)
@@ -271,7 +278,7 @@ class run_GUI(GUI.GUI):
             # self.led_on_14.pack()            
             self.led_on_11.place(x = X3+50,y = Y1 + 10*dY1)
 
-        if (input11 < BS12_THRESHOLD):
+        if (self.BS11 < BS12_THRESHOLD):
             self.led_on_12.place_forget()
             # self.led_off_14.pack()
             self.led_off_12.place(x = X3+50,y = Y1 + 11*dY1)
@@ -280,7 +287,7 @@ class run_GUI(GUI.GUI):
             # self.led_on_14.pack()            
             self.led_on_12.place(x = X3+50,y = Y1 + 11*dY1)
 
-        if (input13 < BS13_THRESHOLD):
+        if (self.BS13 < BS13_THRESHOLD):
             self.led_on_13.place_forget()
             # self.led_off_14.pack()
             self.led_off_13.place(x = X3+50,y = Y1 + 12*dY1)
@@ -289,31 +296,51 @@ class run_GUI(GUI.GUI):
             # self.led_on_14.pack()            
             self.led_on_13.place(x = X3+50,y = Y1 + 12*dY1)
 
-        if (input13 < BS14_THRESHOLD):
+        if (self.BS13 < BS14_THRESHOLD):
             self.led_on_14.place_forget()
             self.led_off_14.pack()
             self.led_off_14.place(x = X3+50,y = Y1 + 13*dY1)
         else:
             self.led_off_14.place_forget()
             self.led_on_14.pack()
-            self.led_on_14.place(x = X3+50,y = Y1 + 13*dY1)                    
+            self.led_on_14.place(x = X3+50,y = Y1 + 13*dY1)  
 
 
 
-        #------------------------------- repeat the timer
-        self.timer = threading.Timer(1.0, self.timerCallback_1)
-        self.timer.start()
 
-
+    def PortAssignment(self):
+        logging.info("Assigning Ports -------------------------------------------")
+        # #---- extract port numbers for config.json
+        with open('./config/config.json') as json_file:
+            ports = json.load(json_file)
+        #assign port numbers to the hardware
+        # logging.info('ports:', ports)
+        self.TEC_PORT = ports['TEC']
+        self.PUMP1_PORT = ports['PUMP1']
+        self.TECHNOSOFT_PORT = ports['TECHNOSOFT']
+        # self.GANTRY_VER_AXIS_ID = 255
+        self.GANTRY_VER_AXIS_ID = int(ports['GANTRY_VER_AXIS_ID'])        
+        # str1 = '   TEC port:'+ self.TEC_PORT+ 'Technosoft port:',self.TECHNOSOFT_PORT +'   pump1:', self.PUMP1_PORT + '   Gantry Vertical Axis ID:'+ str(self.GANTRY_VER_AXIS_ID)
+        # logging.info(str1)
+        logging.info('\tTEC port:'+ self.TEC_PORT)
+        logging.info('\tTechnosoft port:'+self.TECHNOSOFT_PORT )
+        logging.info('\tpump1:'+ self.PUMP1_PORT)
+        logging.info('\tGantry Vertical Axis ID:'+ str(self.GANTRY_VER_AXIS_ID))
+        logging.info("\tPort Assignment done")
+        # # Display port numbers on the GUI (config tab)
+        self.Ltecport.config(text=self.TEC_PORT)
+        self.Lpump1port.config(text=self.PUMP1_PORT)
+        self.Ltechnosoftport.config(text=self.TECHNOSOFT_PORT)
+        self.Lver_gant_axis_id.config(text=self.GANTRY_VER_AXIS_ID)
 
 
 
     def gantry_vertical_set_rel_click(self):
         s = self.ent_gnt_ver_rel.get()
-        # print('child-->'+s)
+        # logging.info('child-->'+s)
         if (is_float(s) == True):
-            # print('it\'s a number:', float(s))
-            #print("----------MOVE Relative-----------------")
+            # logging.info('it\'s a number:', float(s))
+            #logging.info("----------MOVE Relative-----------------")
             speed = 15.0;	
             acceleration = 1.0#
             rel_pos =int(s)
@@ -322,17 +349,17 @@ class run_GUI(GUI.GUI):
             self.motor_gv.move_relative_position(rel_pos, speed, acceleration)
 
         else:
-            print("not a number")
+            logging.info("not a number")
 
 
 
     def gantry_vertical_set_abs_click(self):
 
         s = self.ent_gnt_ver_abs.get()
-        # print('child-->'+s)
+        # logging.info('child-->'+s)
         if (is_float(s) == True):
-            # print('it\'s a number:', float(s))
-            #print("----------MOVE Absolute-----------------")
+            # logging.info('it\'s a number:', float(s))
+            #logging.info("----------MOVE Absolute-----------------")
             speed = 15.0;	
             acceleration = 1.0#
             abs_pos =int(s)
@@ -341,31 +368,55 @@ class run_GUI(GUI.GUI):
             self.motor_gv.move_absolute_position(abs_pos, speed, acceleration)
 
         else:
-            print("not a number")        
+            logging.info("not a number")        
         
 
 
 
+    def InitGantryVertical(self):
+        logging.info("Initializing Gantry Vertical Actuator.....")        
+        self.motor_gv = Motor_VG.motor_Linear(self.TECHNOSOFT_PORT.encode('ascii'),
+                                              self.GANTRY_VER_AXIS_ID, b"LEFS25")    
+        #/*	Setup and initialize the axis */	
+        if (self.motor_gv.InitAxis()==False):
+            logging.error("Failed to start up the drive")    
+        logging.info("\tGantry Vertical Actuator Initialized")        
+        tt =self.motor_gv.set_position()
+        if (tt==True):
+            logging.info("\tcurrent position is set as referece for Gantry Vertical")
+        else:
+            logging.error("\t Failed to set position")
+
+
+
+    def InitMixerMotor(self):
+        # # #------ init. motor 1
+        # # logging.info("Initializing Motors.....")
+        # # self.motor1 = Motor1.motor_1(0,1.5)
+        # # logging.info("\tMotors Initialized")
+
+        # #------ init. motors: Gantry vertical 
+        pass
 
 
     def tec_b_tmpset_click(self):
-        print("child: TECt new tmp:")
+        logging.info("child: TECt new tmp:")
         s =   self.ent_tmp.get()
         if (is_float(s) == True):
-            # print(s)
+            # logging.info(s)
             self.mc.set_temp(float(s))
         else:
-            print("invalid input")
+            logging.info("invalid input")
 
 
 
     def tec_b_start_click(self):
-        print("child: TEC start")
+        logging.info("child: TEC start")
         self.mc.enable()
         pass
 
     def tec_b_stop_click(self):
-        print("child: TEC stop")
+        logging.info("child: TEC stop")
         self.mc.disable()
         pass
 
@@ -373,37 +424,37 @@ class run_GUI(GUI.GUI):
     def checkComboCfg1(self, event):
         # def option_selected(event):
         s = self.comboCfg1.get()
-        print('child :', s)
+        logging.info('child :', s)
         ss=s.partition(')')
         # index = self.comboCfg1.get(0, "end") 
         index = ss[0]
-        print('int number:', int(index))        
-        # print("INDEX = ", index)
+        logging.info('int number:', int(index))        
+        # logging.info("INDEX = ", index)
         self.pump_scale_factor(int(index))
         if (self.microstep == False):
-            print('mircostep off')
+            logging.info('mircostep off')
             self.set_step_mode(False)            
         else:  #self.microstep = True
-            print('mircostep on')
+            logging.info('mircostep on')
             self.set_step_mode(True)
             
 
     def p1_b_pickup_pos_click(self):
-        print("child: p1_pickup ")
+        logging.info("child: p1_pickup ")
         s =   self.ent_pickup_pos.get()
-        print(int(s))
+        logging.info(int(s))
         self.pump1.set_pickup(1, int(s))
 
     def p1_b_dispense_pos_click(self):
-        print("child: p1_dispense ")
+        logging.info("child: p1_dispense ")
         s =   self.ent_dispemse_pos.get()
-        print(int(s))
+        logging.info(int(s))
         self.pump1.set_dispense(1, int(s))
 
 
     def checkComboCfg2(self, event):
         # def option_selected(event):
-        print('child:', self.comboCfg1.get())
+        logging.info('child:', self.comboCfg1.get())
 
 
 
@@ -411,46 +462,46 @@ class run_GUI(GUI.GUI):
 
 
     def m1_b_abs_pos_click(self):
-        print("child: m1_new_spd")
+        logging.info("child: m1_new_spd")
         s =   self.ent_m1_spd_.get()
-        print(s)
+        logging.info(s)
         if (is_float(s) == True):
-            print('it\'s a number:', float(s))
+            logging.info('it\'s a number:', float(s))
             m1_speed = float(s)
             motor1_speed = float(m1_speed)
-            print("motor 1 speed: ", motor1_speed)
+            logging.info("motor 1 speed: ", motor1_speed)
             valid = self.motor1.set_speed(motor1_speed)
             if (valid == True):
                  self.m1_cur_spd.config(text=s)            
         else:
-            print("not a number")
+            logging.info("not a number")
             
     
     # def p1_b_Zinit_click(self):
-    #      print("child: p1 Z initialized")
+    #      logging.info("child: p1 Z initialized")
     #      self.pump1.pump_Zinit(1)
 
     # def p1_b_Yinit_click(self):
-    #      print("child: p1 Y initialized")
+    #      logging.info("child: p1 Y initialized")
     #      self.pump1.pump_Yinit(1)
 
 
 
     # def p1_b_abs_pos_click(self):
-    #     print("----> p1_abs pos")
+    #     logging.info("----> p1_abs pos")
     #     s =   self.ent_abs_pos.get()
-    #     print(s)
+    #     logging.info(s)
     #     self.p1_cur_pos["text"]=  s
 
 
     def p1_b_abs_pos_click(self):
-        print("child: p1_abs pos")
+        logging.info("child: p1_abs pos")
         s =   self.ent_abs_pos.get()
-        print(s)
+        logging.info(s)
         if (is_float(s) == True):
             val = int(s)
             abs_pos = int(val * self.scalefactor)
-            print('position is:', abs_pos)
+            logging.info('position is:', abs_pos)
             self.pump1.set_pos_absolute(1, abs_pos)
             ####===============to be moved to the timer thread
             # time.sleep(.25)
@@ -459,60 +510,60 @@ class run_GUI(GUI.GUI):
 
 
     def p1_b_dispenseUntillbubble(self):
-        print(' dispense until bubble: to be completed later')
+        logging.info(' dispense until bubble: to be completed later')
         pass
 
 
     def p1_b_teminateP1(self):
-        print('child: termnate p1')
+        logging.info('child: termnate p1')
         self.pump1.stop(1)
 
 
 
     def p1_b_pickupUntillbubble(self):
-        print("child: pickup until bubble")
+        logging.info("child: pickup until bubble")
         # send pump1 to 0 position
         # self.pump1.set_pos_absolute(1, 0)
         prev_speed = self.pump1.get_peakspeed(1)
         # change to high speed for retraction
         if (self.microstep == False):
-            print('micro step is off')
+            logging.info('micro step is off')
             self.pump1.set_speed(1,1000)
         else:
-            print('micro step is on')
+            logging.info('micro step is on')
             self.pump1.set_speed(1,1000*8)
 
         a =self.pump1.get_peakspeed(1)
         time.sleep(.25)
-        print('peak speed:', a)
+        logging.info('peak speed:', a)
         self.pump1.set_pos_absolute(1, 0)
 
         cur_pos = 24000
-        print('going to 0 pos')
+        logging.info('going to 0 pos')
         while (cur_pos > 0):
-            # print('cur pos:', cur_pos)
+            # logging.info('cur pos:', cur_pos)
             cur_pos = self.pump1.get_plunger_position(1)            
             time.sleep(1)
 
         # change to low speed for forward motion
         if (self.microstep == False):
-            print('micro step is off')
+            logging.info('micro step is off')
             self.pump1.set_speed(1,48)
         else:
-            print('micro step is on')
+            logging.info('micro step is on')
             self.pump1.set_speed(1,48*8)
 
-        print('going to final pos')
+        logging.info('going to final pos')
         self.pump1.set_pos_absolute(1, 10000)
 
         # continue until a bubble detected or reaching end of travel
         input0 = (self.labjack.getAIN(0))
         while (cur_pos < 2000 and  input0>2.5):
             input0 = (self.labjack.getAIN(0))
-            print('        selcted BS',self.BS, ' , reading: ',self.labjack.getAIN(self.BS-1))
-            print('bubble sensor output:', input0)
+            logging.info('        selcted BS',self.BS, ' , reading: ',self.labjack.getAIN(self.BS-1))
+            logging.info('bubble sensor output:', input0)
             # time.sleep(1)
-            print('cur pos ==', cur_pos)
+            logging.info('cur pos ==', cur_pos)
             cur_pos = self.pump1.get_plunger_position(1)            
         self.pump1.stop(1)
         time.sleep(.25)
@@ -520,9 +571,9 @@ class run_GUI(GUI.GUI):
 
 
     def p1_b_top_spd_click(self):
-        print("p1_top speed")
+        logging.info("p1_top speed")
         s =   self.ent_top_spd.get()
-        print(s)
+        logging.info(s)
         if (is_float(s) == True):
             max_spd = int(s)
             self.pump1.set_speed(1,max_spd)
@@ -532,41 +583,41 @@ class run_GUI(GUI.GUI):
 
     def checkCombo1(self,event):
         s = self.combo1.get()
-        print('child -->'+s)
+        logging.info('child -->'+s)
         ("Pump to Air (P1)","Air to Gas (P2)","Gas to Line (P3)",
                                  "Line to Pump (P4)")
         if (s == "Pump to Air (P1)"):
-            # print(" P1   --- E ")
+            # logging.info(" P1   --- E ")
             new_valve_pos = 'E'
         elif (s == "Air to Gas (P2)"):
-            # print(" P2 ---- O")
+            # logging.info(" P2 ---- O")
             new_valve_pos = 'O'
         elif (s == "Gas to Line (P3)"):
-            # print(" P3 --- I")
+            # logging.info(" P3 --- I")
             new_valve_pos = 'I'
         elif (s == "Line to Pump (P4)"):
-            # print(" P4 ---- B ")
+            # logging.info(" P4 ---- B ")
             new_valve_pos = 'B'
         else:
-            print(' invalid valve selection')
+            logging.info(' invalid valve selection')
             new_valve_pos = 'E'
         self.pump1.set_valve(1, new_valve_pos)
         time.sleep(1)
         s = self.pump1.get_valve(1)
-        # print("-----> ",s)
+        # logging.info("-----> ",s)
         cur_valve = "----"
         if (s=='e'):
             cur_valve = "Pump to Air (P1)"
-            # print('EEEE')
+            # logging.info('EEEE')
         elif(s=='o'):
             cur_valve = "Air to Gas (P2)"
-            # print('OOOO')
+            # logging.info('OOOO')
         elif(s=="i"):
             cur_valve = "Gas to Line (P3)"
-            # print("IIII")
+            # logging.info("IIII")
         elif(s=="b"):
             cur_valve = "Line to Pump (P4)"
-            # print("BBBB")
+            # logging.info("BBBB")
         else:
             cur_valve = "error"
 
@@ -577,7 +628,7 @@ class run_GUI(GUI.GUI):
         s = self.combo0.get()        
         ss=s.partition('S')
         index = int(ss[2])
-        print('bubble sensor number:', index)
+        logging.info('bubble sensor number:', index)
         X3 = 1050
         Y1 = 100
         dY1 = 40
@@ -660,7 +711,7 @@ class run_GUI(GUI.GUI):
         s = self.combob1.get()        
         ss=s.partition('S')
         index = int(ss[2])
-        print('bubble sensor number:', index)
+        logging.info('bubble sensor number:', index)
         X3 = 1050
         Y1 = 100
         dY1 = 40
@@ -742,10 +793,10 @@ class run_GUI(GUI.GUI):
     def set_step_mode(self, flag):
 
         if (flag == False):
-            print('switch to normal mode')
+            logging.info('switch to normal mode')
             self.pump1.set_microstep_position(1,0)
         else:
-            print(" switched to p&v  ")
+            logging.info(" switched to p&v  ")
             self.pump1.set_microstep_position(1,2)
 
 
@@ -794,11 +845,11 @@ class run_GUI(GUI.GUI):
             self.microstep = True
             pass
         else:
-            print("invalid scale factor")
+            logging.info("invalid scale factor")
             self.scalefactor = 1
 
         self.scalefactor = STEP_RANGE / VOLUME
-        print('scale factor:', self.scalefactor)
+        logging.info('scale factor:', self.scalefactor)
 
 
 

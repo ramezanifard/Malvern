@@ -36,6 +36,8 @@ class MeerstetterTEC(object):
     """
     Controlling TEC devices via serial.
     """
+    
+
 
     def _tearDown(self):
         self.session().stop()
@@ -77,7 +79,7 @@ class MeerstetterTEC(object):
                  raise PortNotOpenError
         # get device address
         self.address = self._session.identify()
-        logging.info("connected to {}".format(self.address))
+        # logging.info("\tconnected to {}".format(self.address))
 
     def session(self):
         if self._session is None:
