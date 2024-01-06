@@ -66,15 +66,34 @@ class Pump():
         # print('set valve:',str1)
         self.ser.write(str1.encode())
         self.read()
-        
+
+
+    def set_multiwayvalve(self, axis, pos):
+        str1 = '/'+str(axis)+'I'+str(pos)+'R\r\n'
+        # print('set valve:',str1)
+        self.ser.write(str1.encode())
+        self.read()
+
+
+    def config_valve(self, axis, valve_type):
+        str1 = '/'+str(axis)+'U'+str(valve_type)+'\r\n'
+        # print('config valve:',str1)
+        self.ser.write(str1.encode())
+        str1 = self.read()
+        # print('set valve type respone:', str1)
+
+        # str1 = '/'+str(axis)+'?27R\r\n'        
+        # self.ser.write(str1.encode())
+        # str1 = self.read()
+        # print('detected valve type respone:', str1)
 
     def get_valve(self, axis):
         str1 = '/'+str(axis)+'?6\r\n'
         # print('get valve :',str1)
         self.ser.write(str1.encode())
         str1 = self.read()
-        # str1 = str1.decode('ascii')
-        print("---->", str1)
+        str1 = str1.decode('ascii')
+        # print("---->", str1)
         # print('the valve is in position:',str1[4])
         return str1[4]
 
@@ -84,7 +103,7 @@ class Pump():
         # print('get valve :',str1)
         self.ser.write(str1.encode())
         str1 = self.read()
-        # str1 = str1.decode('ascii')
+        str1 = str1.decode('ascii')
         # print('the peak speed string is:',str1)
         str1 = str1.split("`")
         # print('--->', str1)
@@ -104,7 +123,7 @@ class Pump():
         # str1 = str1.decode()
         # print("2==============>", str1[4:])       
         if (is_float(str1[4:-1]) == True):
-            print('the plunger position is:',str1[4:] , '-->', int(str1[4:-1] ))
+            # print('the plunger position is:',str1[4:] , '-->', int(str1[4:-1] ))
             return  int(str1[4:-1])
         else:
             return 0
@@ -146,12 +165,12 @@ class Pump():
                 response_frame += response_byte
                 
                 response_byte = self._read(size=1)
-                print(response_byte)
+                # print(response_byte)
         except:
-            print(response_byte)
-            print("excepto in pump!!")
+            # print(response_byte)
+            print("exception happened in pump!!")
         else:    
-            print(response_frame)            
+            # print(response_frame)            
             return response_frame
         # res = ser.readline()
         return response_frame
@@ -165,7 +184,7 @@ class Pump():
         """
         recv = self.ser.read(size=size)
         if len(recv) < size:
-            print("miatake reading pump!!!")
+            print("Error reading pump!!!")
         else:
             return recv
 

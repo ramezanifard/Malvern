@@ -21,6 +21,7 @@ CHANNEL_TYPE = 0 #for rs232
 HOST_ID	= 0
 BAUDRATE = 115200
 POWER_ON = 1
+POWER_OFF = 0
 
 
 
@@ -35,6 +36,7 @@ class motor_Linear():
     global HOST_ID	
     global BAUDRATE 
     global POWER_ON 
+    global POWER_OFF
 
 
     def __init__(self, CHANNEL_NAME, AXIS_ID_01, motor_type) -> None:
@@ -43,23 +45,21 @@ class motor_Linear():
         self.mydll1 =CDLL("./config/TML_LIB.dll")
         #/*	Load the *.t.zip with setup data generated with EasyMotion Studio or EasySetUp */
         config_file = b"./config/"+motor_type + b".t.zip"
-        print('\tloading setup file: ', config_file)
+        print('config file = ', config_file)
         # self.idxSetup = self.mydll1.TS_LoadSetup(b"./config/LEFS25.t.zip")
         self.idxSetup = self.mydll1.TS_LoadSetup(config_file)
-
-
         if (self.idxSetup < 0):
             print('cannot load setup')
             return False
         else:
-            print("\tsetup loaded sucessfully")
+            print("setup loaded sucessfully")
 
         # print("---------initialize the motor  -------------------")
-        print("\tOpening com port:", self.CHANNEL_NAME)
+        print("connecting to com porst:",self.CHANNEL_NAME)
         if self.InitCommunicationChannel() == False:
             print("Commumication error!", self.mydll1.TS_GetLastErrorText())
         else:
-            print("\tCommunication established")
+            print("Communication established")
 
         # self.set_position()
         # # print("------------set int var ------------------------------")
@@ -83,7 +83,7 @@ class motor_Linear():
             print("can setup axis")
             return False
         else:
-            print('\tsetup axis: done')
+            print(' setup axis:', tt)
 
         #	Select the destination axis of the TML commands 
         tt = self.mydll1.TS_SelectAxis(self.AXIS_ID_01)
@@ -91,7 +91,7 @@ class motor_Linear():
             print("can find axis")
             return False
         else:
-            print('\tselect dest. axis: done')
+            print(' select dest. axis:', tt)
 
         time.sleep(.5)
         #/*	Execute the initialization of the drive (ENDINIT) */
@@ -100,14 +100,14 @@ class motor_Linear():
             print("Can't init. drive")
             return False
         else:
-            print('\tinit successful ')
+            print('init successful:', tt)
 
         #/*	Enable the power stage of the drive (AXISON) */ 
         tt = self.mydll1.TS_Power(POWER_ON)
         if (tt==0):
             print("Can't power on")
         else:
-            print('\tPower On successful')
+            print('Power On successful:', tt)
 
         # Wait for power stage to be enabled */        
         y = self.mydll1.TS_ReadStatus   # Read drive/motor status info.
@@ -121,6 +121,80 @@ class motor_Linear():
         # print('(h){:X}  = (b){:b} '.format(p.value,p.value))
 
         return True
+
+
+
+
+    def homing(self):
+        #print("----------MOVE Relative-----------------")
+        position = 100000000	#	/* position command [drive internal position units, encoder counts] */
+        home_position = 1000	#	/* the homing position [drive internal position units, encoder counts] */
+        cap_position = 0		#	/* the position captures at HIGH-LOW transition of negative limit switch */
+        high_speed = 10	    	#	/* the homing travel speed [drive internal speed units, encoder counts/slow loop sampling]*/
+        low_speed = 1.0 		#	/* the homing brake speed [drive internal speed units, encoder counts/slow loop sampling] */
+        acceleration = 0.6
+        #/*Constants used for LSWType*/
+        LSW_NEGATIVE = -1
+        LSW_POSITIVE = 1
+        # /*Constants used for TransitionType*/
+        TRANSITION_HIGH_TO_LOW =-1
+        TRANSITION_DISABLE =0
+        TRANSITION_LOW_TO_HIGH =1
+        
+        #/*	Command a trapezoidal positioning to search the negative limit switch */
+        x = self.mydll1.TS_MoveRelative
+        x.restype = c_bool
+        x.argtypes = [c_long,c_double, c_double, c_bool, c_short, c_short]
+        tt = x(position, high_speed, acceleration,NO_ADDITIVE,UPDATE_IMMEDIATE,FROM_REFERENCE)
+        if tt<=0:
+            print("Error moving relative")
+            return False
+        
+        ##/*	Wait for the LOW-HIGH transition on positive limit switch */
+        x = self.mydll1.TS_SetEventOnLimitSwitch
+        x.restype = c_bool
+        x.argtypes = [c_short, c_short, c_bool, c_bool]
+        EnableStop = False
+        tt = x(LSW_POSITIVE, TRANSITION_LOW_TO_HIGH, WAIT_EVENT, EnableStop)
+        if tt<=0:
+            print("Error in set event on limit switch")
+            return False
+
+        #TS_SetEventOnMotionComplete
+        if (self.mydll1.TS_SetEventOnMotionComplete(WAIT_EVENT,NO_STOP) == False):
+            print("error in set event on motion complete")
+            return False
+
+        # #/*	Read the captured position on limit switch transition */
+        # y = self.mydll1.TS_GetLongVariable
+        # y.restype = c_bool
+        # y.argtypes = [c_char_p, POINTER(c_long)]
+        # p = c_long()
+        # tt = y(b"CAPPOS",  byref(p))
+        # print(" The captured position is: {} [drive internal position units]\n".format( p.value));
+
+        # set that spot as home position
+        self.set_position()
+
+        #/*	Command an absolute positioning on the captured position */
+        x = self.mydll1.TS_MoveAbsolute
+        x.restype = c_bool
+        x.argtypes = [c_long,c_double, c_double,  c_short, c_short]
+        abs_pos = -2000
+        tt = x(abs_pos, low_speed, acceleration,UPDATE_IMMEDIATE,FROM_REFERENCE)
+        if (tt == False):
+            print("error in moving to absolute position")
+            return False
+
+        # /*	Wait until the positioning is ended */
+        if (self.mydll1.TS_SetEventOnMotionComplete(WAIT_EVENT,NO_STOP) == False):
+            print("error in set event on motion complete")
+            return False
+        
+        return True
+
+
+
 
 
     def get_firmware_version(self):
@@ -153,28 +227,29 @@ class motor_Linear():
 
         tt = x(rel_pos, speed, acceleration,NO_ADDITIVE,UPDATE_IMMEDIATE,FROM_REFERENCE)
         
-        # if (tt==True):
-        #     print("moving to relative position is done")
+        if (tt==True):
+            print("moving to relative position is done")
         # /*	Wait until the positioning is ended */
         if (self.mydll1.TS_SetEventOnMotionComplete(WAIT_EVENT,NO_STOP) == False):
             print("error in set event on motion complete")
+            return False
 
-    
+        return True
+
     def move_absolute_position(self, abs_pos, speed, acceleration):
-        # print("----------MOVE Relative-----------------")
+        # print("----------MOVE Absolute-----------------")
         x = self.mydll1.TS_MoveAbsolute
         x.restype = c_bool
         x.argtypes = [c_long,c_double, c_double,  c_short, c_short]
 
         tt = x(abs_pos, speed, acceleration,UPDATE_IMMEDIATE,FROM_REFERENCE)
         
-        # if (tt==True):
-        #     print("moving to absolute position is done")
+        if (tt==True):
+            print("moving to absolute position is done")
         # /*	Wait until the positioning is ended */
         if (self.mydll1.TS_SetEventOnMotionComplete(WAIT_EVENT,NO_STOP) == False):
             print("error in set event on motion complete")
-
-
+    
     def read_actual_position(self):
         # print("------------Read actual position ------------------------------")
         y = self.mydll1.TS_GetLongVariable
@@ -217,64 +292,73 @@ class motor_Linear():
         # print("tt-->", tt)        
         print('POSOKLIM = {} '.format(p.value))
 
+    def disable_motor(self):
+        #/*	Enable the power stage of the drive (AXISON) */ 
+        tt = self.mydll1.TS_Power(POWER_OFF)
+        if (tt==0):
+            print("Can't power off")
+        else:
+            print('Power Off successful:')
+
+        self.mydll1.TS_CloseChannel(-1)
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    # self.mydll1 =CDLL("./TML_LIB.dll")
-    # fd = self.mydll1.TS_OpenChannel(b"COM6",0, AXIS_ID_01, 115200)
-    # print("result:", fd)
+#     # self.mydll1 =CDLL("./TML_LIB.dll")
+#     # fd = self.mydll1.TS_OpenChannel(b"COM6",0, AXIS_ID_01, 115200)
+#     # print("result:", fd)
 
-    motor = motor_Linear()
+#     motor = motor_Linear()
 
-    # # print("---------initialize the motor  -------------------")
-    # if motor.InitCommunicationChannel() == False:
-    #     print("Commumication error!")
-    # else:
-    #      print("Communication established")
-
-
-    #/*	Setup and initialize the axis */	
-    if (motor.InitAxis()==False):
-        print("Failed to start up the drive")
+#     # # print("---------initialize the motor  -------------------")
+#     # if motor.InitCommunicationChannel() == False:
+#     #     print("Commumication error!")
+#     # else:
+#     #      print("Communication established")
 
 
-
-
-
-    # print("---------get FM VER -------------------")
-    motor.get_firmware_version()
-
-    # print("----------set position-----------------")
-    motor.set_position()
-
-    # print("------------set int var ------------------------------")
-    motor.set_POSOKLIM(2)
-
-    # print("------------get int var ------------------------------")
-    motor.get_POSOKLIM()
-
-
-
-    #print("----------MOVE Relative-----------------")
-    speed = 15.0;		#/* jogging speed [drive internal speed units, encoder counts/slow loop sampling] */
-    acceleration = 1.0#0.015;#/* acceleration rate [drive internal acceleration units, encoder counts/slow loop sampling^2] */
-    rel_pos = -5000
-    motor.move_relative_position(rel_pos, speed, acceleration)
-
-    time.sleep(3)
-    speed = 30.0
-    rel_pos = 5000 # 5000/800 *6 = 0.0075*5000=3.25mm
-    motor.move_relative_position(rel_pos, speed, acceleration)
+#     #/*	Setup and initialize the axis */	
+#     if (motor.InitAxis()==False):
+#         print("Failed to start up the drive")
 
 
 
 
 
-    # print("------------Read actual position ------------------------------")
-    motor.read_actual_position()
+#     # print("---------get FM VER -------------------")
+#     motor.get_firmware_version()
 
-    motor.read_target_position()
+#     # print("----------set position-----------------")
+#     motor.set_position()
+
+#     # print("------------set int var ------------------------------")
+#     motor.set_POSOKLIM(2)
+
+#     # print("------------get int var ------------------------------")
+#     motor.get_POSOKLIM()
+
+
+
+#     #print("----------MOVE Relative-----------------")
+#     speed = 15.0;		#/* jogging speed [drive internal speed units, encoder counts/slow loop sampling] */
+#     acceleration = 1.0#0.015;#/* acceleration rate [drive internal acceleration units, encoder counts/slow loop sampling^2] */
+#     rel_pos = -5000
+#     motor.move_relative_position(rel_pos, speed, acceleration)
+
+#     time.sleep(3)
+#     speed = 30.0
+#     rel_pos = 5000 # 5000/800 *6 = 0.0075*5000=3.25mm
+#     motor.move_relative_position(rel_pos, speed, acceleration)
+
+
+
+
+
+#     # print("------------Read actual position ------------------------------")
+#     motor.read_actual_position()
+
+#     motor.read_target_position()
 
 
 

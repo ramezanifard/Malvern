@@ -66,7 +66,26 @@ class Pump():
         # print('set valve:',str1)
         self.ser.write(str1.encode())
         self.read()
-        
+
+
+    def set_multiwayvalve(self, axis, pos):
+        str1 = '/'+str(axis)+'I'+str(pos)+'R\r\n'
+        # print('set valve:',str1)
+        self.ser.write(str1.encode())
+        self.read()
+
+
+    def config_valve(self, axis, valve_type):
+        str1 = '/'+str(axis)+'U'+str(valve_type)+'\r\n'
+        # print('config valve:',str1)
+        self.ser.write(str1.encode())
+        str1 = self.read()
+        # print('set valve type respone:', str1)
+
+        # str1 = '/'+str(axis)+'?27R\r\n'        
+        # self.ser.write(str1.encode())
+        # str1 = self.read()
+        # print('detected valve type respone:', str1)
 
     def get_valve(self, axis):
         str1 = '/'+str(axis)+'?6\r\n'

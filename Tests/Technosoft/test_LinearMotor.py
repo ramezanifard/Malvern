@@ -5,16 +5,16 @@ import time
 
 if __name__ == "__main__":
 
-
-    motor = motor_Linear(b"COM6", 255, b"LEFS25")
+    AXIS_ID = 1    
+    
+    Larger_actutator= b"LEFS32"
+    smaller_actuator= b"LEFS25"
+    motor = motor_Linear(b"COM6", AXIS_ID, smaller_actuator)
     
 
     #/*	Setup and initialize the axis */	
     if (motor.InitAxis()==False):
         print("Failed to start up the drive")
-
-
-
 
 
     # # print("---------get FM VER -------------------")
@@ -34,20 +34,17 @@ if __name__ == "__main__":
     #print("----------MOVE Relative-----------------")
     speed = 15.0;		#/* jogging speed [drive internal speed units, encoder counts/slow loop sampling] */
     acceleration = 1.0#0.015;#/* acceleration rate [drive internal acceleration units, encoder counts/slow loop sampling^2] */
-    rel_pos = 2000
+    rel_pos = 10000
     motor.move_relative_position(rel_pos, speed, acceleration)
 
-    time.sleep(3)
-    speed = 30.0
-    rel_pos = 2000 # 5000/800 *6 = 0.0075*5000=3.25mm
-    motor.move_relative_position(rel_pos, speed, acceleration)
+    # time.sleep(3)
+    # speed = 30.0
+    # rel_pos = -2000 # 5000/800 *6 = 0.0075*5000=3.25mm
+    # motor.move_relative_position(rel_pos, speed, acceleration)
 
-    time.sleep(3)
-    abs_pos = 0
-    motor.move_absolute_position(abs_pos, speed, acceleration)
-
-
-
+    # time.sleep(3)
+    # abs_pos = 0
+    # motor.move_absolute_position(abs_pos, speed, acceleration)
 
 
     # print("------------Read actual position ------------------------------")
@@ -58,3 +55,5 @@ if __name__ == "__main__":
     print('Target position = {} '.format(p))
     print("------------get int var ------------------------------")
     motor.get_POSOKLIM()
+
+    motor.disable_motor()

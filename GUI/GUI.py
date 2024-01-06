@@ -22,7 +22,7 @@ class GUI():
       def define_tab1(self):
             self.setup_pump1()
             self.setup_pump2()
-            self.setup_TitranTValves()
+            self.setup_TitrantValves()
             self.setup_SampleValves()
             self.setup_BubbleSensors()
             #---------------------------- EXIT BUTTON ----------------------------------------
@@ -81,6 +81,58 @@ class GUI():
             self.Lver_gant_axis_id = Label(self.tab3, text = "----",font='sans 15 italic' , bg=self.Color1,fg='green')
             self.Lver_gant_axis_id.pack()
             self.Lver_gant_axis_id.place(x = XX1+XX2,y = Y1+6*dY1)
+
+            XX3 = 500 # first col. of labels
+            XX4 = 200 # second col of labels
+            Label(self.tab3, text = "CAN BUS ADDRESS",font=self.Font4 , bg=self.Color1,
+                  fg=self.Title_large).place(x = XX3,y=Y1-80)  
+            Label(self.tab3, text = "Pump 1:",font=self.Font3 , bg=self.Color1,
+                  fg='black').place(x = XX3,y = Y1+0*dY1)  
+            self.Lpump1_id = Label(self.tab3, text = "----",font='sans 15 italic' , bg=self.Color1,fg='green')
+            self.Lpump1_id.pack()
+            self.Lpump1_id.place(x = XX3+XX4,y = Y1+0*dY1)
+            Label(self.tab3, text = "Loop Valve (V3):",font=self.Font3 , bg=self.Color1,
+                  fg='black').place(x = XX3,y = Y1+1*dY1)  
+            self.Lvalv3_id = Label(self.tab3, text = "----",font='sans 15 italic' , bg=self.Color1,fg='green')
+            self.Lvalv3_id.pack()
+            self.Lvalv3_id.place(x = XX3+XX4,y = Y1+1*dY1)
+            Label(self.tab3, text = "Pipette Valve (V5):",font=self.Font3 , bg=self.Color1,
+                  fg='black').place(x = XX3,y = Y1+2*dY1)  
+            self.Lvalv5_id = Label(self.tab3, text = "----",font='sans 15 italic' , bg=self.Color1,fg='green')
+            self.Lvalv5_id.pack()
+            self.Lvalv5_id.place(x = XX3+XX4,y = Y1+2*dY1)
+            Label(self.tab3, text = "Cleaning Valve (V9):",font=self.Font3 , bg=self.Color1,
+                  fg='black').place(x = XX3,y = Y1+3*dY1)  
+            self.Lvalv9_id = Label(self.tab3, text = "----",font='sans 15 italic' , bg=self.Color1,fg='green')
+            self.Lvalv9_id.pack()
+            self.Lvalv9_id.place(x = XX3+XX4,y = Y1+3*dY1)
+
+            Label(self.tab3, text = "Pump 2:",font=self.Font3 , bg=self.Color1,
+                  fg='black').place(x = XX3,y = Y1+4*dY1)  
+            self.Lpump2_id = Label(self.tab3, text = "----",font='sans 15 italic' , bg=self.Color1,fg='green')
+            self.Lpump2_id.pack()
+            self.Lpump2_id.place(x = XX3+XX4,y = Y1+4*dY1)
+            Label(self.tab3, text = "Loop Valve (V4):",font=self.Font3 , bg=self.Color1,
+                  fg='black').place(x = XX3,y = Y1+5*dY1)  
+            self.Lvalv4_id = Label(self.tab3, text = "----",font='sans 15 italic' , bg=self.Color1,fg='green')
+            self.Lvalv4_id.pack()
+            self.Lvalv4_id.place(x = XX3+XX4,y = Y1+5*dY1)
+            Label(self.tab3, text = "Titrant Valve (V6):",font=self.Font3 , bg=self.Color1,
+                  fg='black').place(x = XX3,y = Y1+6*dY1)  
+            self.Lvalv6_id = Label(self.tab3, text = "----",font='sans 15 italic' , bg=self.Color1,fg='green')
+            self.Lvalv6_id.pack()
+            self.Lvalv6_id.place(x = XX3+XX4,y = Y1+6*dY1)
+            Label(self.tab3, text = "Degasser Valve (V7):",font=self.Font3 , bg=self.Color1,
+                  fg='black').place(x = XX3,y = Y1+7*dY1)  
+            self.Lvalv7_id = Label(self.tab3, text = "----",font='sans 15 italic' , bg=self.Color1,fg='green')
+            self.Lvalv7_id.pack()
+            self.Lvalv7_id.place(x = XX3+XX4,y = Y1+7*dY1)
+            Label(self.tab3, text = "Cleaning Valve (V8):",font=self.Font3 , bg=self.Color1,
+                  fg='black').place(x = XX3,y = Y1+8*dY1)  
+            self.Lvalv8_id = Label(self.tab3, text = "----",font='sans 15 italic' , bg=self.Color1,fg='green')
+            self.Lvalv8_id.pack()
+            self.Lvalv8_id.place(x = XX3+XX4,y = Y1+8*dY1)
+
 
 
 
@@ -272,7 +324,7 @@ class GUI():
                                                                               y = Y1 + 13*dY1)
             
 
-      def setup_TitranTValves(self):
+      def setup_TitrantValves(self):
             #---------------------  VALVE   TAB ---------------------------------------
             dY1 = 30
             XX1 = 265  #1st col of labels
@@ -307,7 +359,9 @@ class GUI():
             Label(self.tab1, text = "Current Pos",font=self.Font1 , bg=self.Color1,
                   fg='black').place(x = XX1,y = yy+Y1 + dY1)  
             self.v3_cur_pos = Label(self.tab1, text = "----",
-                                    font=self.Font1 ).place(x =XX1 + XX2,y = yy+Y1 + dY1)  
+                                    font=self.Font1 )
+            self.v3_cur_pos.pack()
+            self.v3_cur_pos.place(x =XX1 + XX2-14,y = yy+Y1 + dY1)  
             Label(self.tab1, text = "New Pos",font=self.Font1 , bg=self.Color1,
                   fg='black').place(x = XX1,y = yy+Y1 + 2*dY1)  
             self.combo3 = ttk.Combobox(self.tab1,  width=17, font=self.Font6)
@@ -322,12 +376,13 @@ class GUI():
                   fg=self.Title_mid).place(x = XX1+10,y = yy+Y1-10)  
             Label(self.tab1, text = "Current Pos",font=self.Font1 , bg=self.Color1,
                   fg='black').place(x = XX1,y = yy+Y1 + dY1)  
-            self.v5_cur_pos = Label(self.tab1, text = "----",
-                                    font=self.Font1 ).place(x =XX1 + XX2, y = yy+Y1 + dY1)  
+            self.v5_cur_pos = Label(self.tab1, text = "----",font=self.Font1 )
+            self.v5_cur_pos.pack()
+            self.v5_cur_pos.place(x =XX1 + XX2-14, y = yy+Y1 + dY1)  
             Label(self.tab1, text = "New Pos",font=self.Font1 , bg=self.Color1,
                   fg='black').place(x = XX1,y = yy+Y1 + 2*dY1)  
             self.combo5 = ttk.Combobox(self.tab1,  width=17, font=self.Font6)
-            self.combo5['values'] = ("Titrant Port (P1)","Reservois (P2)","Titrant Cannula(P3)")
+            self.combo5['values'] = ("Titrant Port (P1)","Reservoirs (P2)","Titrant Cannula(P3)")
             self.combo5.current(0)
             self.combo5.place(x = XX1 + XX2-32,y =yy+ Y1 + 2*dY1)
             self.combo5.bind("<<ComboboxSelected>>", self.checkCombo5) 
@@ -337,8 +392,9 @@ class GUI():
                   fg=self.Title_mid).place(x = XX1+0,y = yy+Y1-10)  
             Label(self.tab1, text = "Current Pos",font=self.Font1 , bg=self.Color1,
                   fg='black').place(x = XX1,y = yy+Y1 + dY1)  
-            self.v5_cur_pos = Label(self.tab1, text = "----",
-                                    font=self.Font1 ).place(x =XX1 + XX2,y = yy+Y1 + dY1)  
+            self.v9_cur_pos = Label(self.tab1, text = "----", font=self.Font1 )
+            self.v9_cur_pos.pack()
+            self.v9_cur_pos.place(x =XX1 + XX2-14,y = yy+Y1 + dY1)  
             Label(self.tab1, text = "New Pos",font=self.Font1 , bg=self.Color1,
                   fg='black').place(x = XX1,y = yy+Y1 + 2*dY1)  
             self.combo9 = ttk.Combobox(self.tab1,  width=17, font=self.Font6)
@@ -646,7 +702,7 @@ class GUI():
             Y1 = 140
             XX2 = 100
             XX3=50
-            Label(self.tab2, text = "MOTOR 1 ",font=self.Font4 , bg=self.Color1,
+            Label(self.tab2, text = "MIXING MOTOR",font=self.Font4 , bg=self.Color1,
                   fg=self.Title_large).place(x = XX1+40,y = 40)  
             Label(self.tab2, text = "Current Spd",font=self.Font1 , bg=self.Color1,
                   fg='black').place(x = XX1,y = Y1 + dY1)  
@@ -660,7 +716,7 @@ class GUI():
             self.ent_m1_spd_.place(x = XX1 + XX2,y = Y1 + 2*dY1 ) 
             self.b_m1_spd = Button(self.tab2,text="set", bg=self.Color2, 
                                     fg=self.Color3, 
-                                    command=self.m1_b_abs_pos_click).place(x = XX1 + XX2+XX3,
+                                    command=self.m1_b_abs_pos_click).place(x = XX1 + XX2+XX3+10,
                                                                         y = Y1 + 2*dY1 - 2)
             
 
@@ -698,16 +754,16 @@ class GUI():
             delta = 50
             Label(self.tab2, text = "GANTRY VER.",font=self.Font4 , bg=self.Color1,
                   fg=self.Title_large).place(x = XX1-0,y = 40)  
+            
             Label(self.tab2, text = "Current Pos",font=self.Font1 , bg=self.Color1,
                   fg='black').place(x = XX1,y = Y1 + dY1)  
             self.m3_cur_spd = Label(self.tab2, text = "----",
                                     font=self.Font1 )
             self.m3_cur_spd.pack()
             self.m3_cur_spd.place(x =XX1 + XX2+ delta,y = Y1 + dY1)  
-            Label(self.tab2, text = "New Relative Pos.",font=self.Font1 , bg=self.Color1,
-                  fg='black').place(x = XX1,y = Y1 + 2*dY1)  
             
-
+            Label(self.tab2, text = "New Relative Pos.",font=self.Font1 , bg=self.Color1,
+                  fg='black').place(x = XX1,y = Y1 + 2*dY1)              
             self.ent_gnt_ver_rel = Entry(self.tab2, width=5,font=self.Font1) 
             self.ent_gnt_ver_rel.pack()
             self.ent_gnt_ver_rel.place(x = XX1 + XX2+ delta,y = Y1 + 2*dY1)
@@ -970,13 +1026,13 @@ class GUI():
             print('-->'+self.combo1.get())
 
       def checkCombo3(self, event):
-            print('-->'+self.combo3.get())
+            print('parent-->'+self.combo3.get())
 
       def checkCombo5(self, event):
-            print('-->'+self.combo5.get())
+            print('parent-->'+self.combo5.get())
 
       def checkCombo9(self, event):
-            print('-->'+self.combo9.get())        
+            print('parent-->'+self.combo9.get())        
 
       def checkCombo2(self, event):
             print('-->'+self.combo2.get())  
