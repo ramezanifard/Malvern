@@ -36,6 +36,8 @@ class MeerstetterTEC(object):
     """
     Controlling TEC devices via serial.
     """
+    
+
 
     def _tearDown(self):
         self.session().stop()
@@ -77,7 +79,7 @@ class MeerstetterTEC(object):
                  raise PortNotOpenError
         # get device address
         self.address = self._session.identify()
-        logging.info("connected to {}".format(self.address))
+        # logging.info("\t\tconnected to {}".format(self.address))
 
     def session(self):
         if self._session is None:
@@ -105,7 +107,7 @@ class MeerstetterTEC(object):
         """
         # assertion to explicitly enter floats
         assert type(value) is float
-        logging.info("set object temperature for channel {} to {} C".format(self.channel, value))
+        logging.info("\tset object temperature for channel {} to {} C".format(self.channel, value))
         return self.session().set_parameter(parameter_id=3000, value=value, address=self.address, parameter_instance=self.channel)
 
     def _set_enable(self, enable=True):
@@ -116,7 +118,7 @@ class MeerstetterTEC(object):
         :return:
         """
         value, description = (1, "on") if enable else (0, "off")
-        logging.info("set loop for channel {} to {}".format(self.channel, description))
+        logging.info("\tset loop for channel {} to {}".format(self.channel, description))
         return self.session().set_parameter(value=value, parameter_name="Status", address=self.address, parameter_instance=self.channel)
 
     def enable(self):
