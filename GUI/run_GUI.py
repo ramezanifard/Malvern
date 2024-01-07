@@ -1,6 +1,6 @@
 import GUI
 from tkinter import * 
-import config.motor_1 as Motor1
+# import config.motor_1 as Motor1
 # import config.motor_Linear as Motor_VG
 from config.motor_2axes import motor_2axes as Motors
 import config.Pump as P
@@ -29,21 +29,39 @@ BS14_THRESHOLD = 2.5  #Threshold value for bubble sensor 14
 #---------------------------------------------------------------------------
 
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter('%(name)s:%(message)s')
+
+file_handler = logging.FileHandler('errors.log')
+file_handler.setLevel(logging.ERROR)
+file_handler.setFormatter(formatter)
+
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+stream_handler.setLevel(logging.INFO)
+
+logger.addHandler(file_handler)
+logger.addHandler(stream_handler)
+
+
+
 
 class run_GUI(GUI.GUI):
 
     def __init__(self,root):
         super().__init__( root)
-        # logging.basicConfig(level=logging.INFO)
-        logging.basicConfig(
-            level=logging.DEBUG,
-            #format="%(asctime)s %(levelname)s %(message)s",
-            format="%(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-            #filename="basic.log"
-        )
+        # logger.basicConfig(level=logger.INFO)
+        # logger.basicConfig(
+        #     level=logger.DEBUG,
+        #     #format="%(asctime)s %(levelname)s %(message)s",
+        #     format="%(message)s",
+        #     datefmt="%Y-%m-%d %H:%M:%S",
+        #     #filename="basic.log"
+        # )
         
-        logging.info("Initializing hardware -------------------------------------")
+        logger.info("Initializing hardware -------------------------------------")
         self.PortAssignment()
         self.InitMixerMotor()
         self.Init__motors_all_axes()            
@@ -51,18 +69,18 @@ class run_GUI(GUI.GUI):
         self.InitLabjack()
         self.InitTecController()
         self.InitTimer()
-        logging.info("Hardware initialiation done")        
+        logger.info("Hardware initialiation done")        
 
         #------------ Setting the inital states/values of the hardware ----------------------
         self.scalefactor = 1
         self.microstep = False         
         self.pump_scale_factor(1)
-        logging.info('mircostep off')
+        logger.info('mircostep off')
         self.set_step_mode(False)
         self.BS= 1        
         
-        # logging.info(self.mc.set_temp(35.3))
-        # logging.info("----------------------------------------------")
+        # logger.info(self.mc.set_temp(35.3))
+        # logger.info("----------------------------------------------")
 
         # # # # #-------- set the motor1 speed to 0
         # # # valid = self.motor1.set_speed(0)
@@ -75,18 +93,18 @@ class run_GUI(GUI.GUI):
         # # # time.sleep(.75)
         # # # self.v1_cur_pos.config(text = "Pump to Air (P1)")
         
-        logging.info("------------------------------------------------------------------")
-        logging.info('System started successfully.')
-        logging.info("Please use the GUI to enter a commamnd ...")
+        logger.info("------------------------------------------------------------------")
+        logger.info('System started successfully.')
+        logger.info("Please use the GUI to enter a commamnd ...")
         
 
     def timerCallback_1(self):  
-        # logging.info('--->timer tick')
+        # logger.info('--->timer tick')
         #------------------------------- update pump 1 position
         p1_cur_pos = self.pump1.get_plunger_position(1)            
         p1_cur_pos = int(p1_cur_pos / self.scalefactor)
         self.p1_cur_pos.config(text = str(p1_cur_pos))
-        # logging.info('cur pos:', p1_cur_pos)
+        # logger.info('cur pos:', p1_cur_pos)
         # #------------------------------- update  of TEC controller parameters
         self.updateGUI_TectController()
         #-------- update Gantry vertical motor position on GUI ------------------
@@ -101,12 +119,12 @@ class run_GUI(GUI.GUI):
 
 
     def updateGUI_TectController(self):
-        # # logging.info(self.mc.get_data())
+        # # logger.info(self.mc.get_data())
         tec_dic =  self.mc.get_data()
         obj_temp = round(tec_dic['object temperature'][0], 1)
         target_temp = round(tec_dic['target object temperature'][0], 1)
         TEC_cur_status = tec_dic['loop status'][0]        
-        # logging.info('--->obj temp:{} , target temp:{}    status:{}'.format(obj_temp,  target_temp,TEC_cur_status))
+        # logger.info('--->obj temp:{} , target temp:{}    status:{}'.format(obj_temp,  target_temp,TEC_cur_status))
         # 1: ON, 0:OFF, 
         if (TEC_cur_status== 1):            
             self.t_status.config(text = "ON")                        
@@ -119,9 +137,9 @@ class run_GUI(GUI.GUI):
 
     def Init_Pumps_Valves(self):        
         # # #------ init. Pump 1
-        logging.info(" Initializing Pumps/Valves.....")
+        logger.info(" Initializing Pumps/Valves.....")
         self.pump1 = P.Pump("COM9")
-        logging.info("\tPumps initialized")
+        logger.info("\tPumps initialized")
         self.pump1.pump_Zinit(1)
         
 
@@ -130,29 +148,29 @@ class run_GUI(GUI.GUI):
 
     def InitLabjack(self):
         # # initialize labjack
-        logging.info("Initializing Labjack.....")
+        logger.info("Initializing Labjack.....")
         self.labjack = u6.U6()
         self.labjack.writeRegister(50590, 15)        
-        logging.info('\tlabjack initialized')
+        logger.info('\tlabjack initialized')
         # pass
 
 
     def InitTimer(self):
         # #------ Starts timer
-        logging.info('starting internal timer')
+        logger.info('starting internal timer')
         self.timer = threading.Timer(1.0, self.timerCallback_1)
         self.timer.start()
-        logging.info('\tInternal timer started')
+        logger.info('\tInternal timer started')
         #pass
 
 
     def InitTecController(self):
         # ------create object of TEC5 
-        logging.info("Initialzing TEC Temperature Controller---------------------")
+        logger.info("Initialzing TEC Temperature Controller---------------------")
         # self.mc = TEC.MeerstetterTEC("COM5")
         self.mc = TEC.MeerstetterTEC(self.TEC_PORT)
-        # logging.info(self.mc.get_data())
-        logging.info("\tTEC controller initialized ")
+        # logger.info(self.mc.get_data())
+        logger.info("\tTEC controller initialized ")
 
 
     def read_BubbleSensors(self):
@@ -312,22 +330,22 @@ class run_GUI(GUI.GUI):
 
 
     def PortAssignment(self):
-        logging.info("Assigning Ports -------------------------------------------")
+        logger.info("Assigning Ports -------------------------------------------")
         # #---- extract port numbers for config.json
         with open('./config/config.json') as json_file:
             ports = json.load(json_file)
         #assign port numbers to the hardware
-        # logging.info('ports:', ports)
+        # logger.info('ports:', ports)
         self.TEC_PORT = ports['TEC']
         self.PUMP1_PORT = ports['PUMP1']
         self.TECHNOSOFT_PORT = ports['TECHNOSOFT']
         # self.GANTRY_VER_AXIS_ID = 255
         self.GANTRY_VER_AXIS_ID = int(ports['GANTRY_VER_AXIS_ID'])        
-        logging.info('\tTEC port:'+ self.TEC_PORT)
-        logging.info('\tTechnosoft port:'+self.TECHNOSOFT_PORT )
-        logging.info('\tpump1:'+ self.PUMP1_PORT)
-        logging.info('\tGantry Vertical Axis ID:'+ str(self.GANTRY_VER_AXIS_ID))
-        logging.info("\tPort Assignment done")
+        logger.info('\tTEC port:{}'.format( self.TEC_PORT))
+        logger.info('\tTechnosoft port:{}'.format(self.TECHNOSOFT_PORT ))
+        logger.info('\tpump1:{}'.format( self.PUMP1_PORT))
+        logger.info('\tGantry Vertical Axis ID:{}'.format( str(self.GANTRY_VER_AXIS_ID)))
+        logger.info("\tPort Assignment done")
         # # Display port numbers on the GUI (config tab)
         self.Ltecport.config(text=self.TEC_PORT)
         self.Lpump1port.config(text=self.PUMP1_PORT)
@@ -349,9 +367,9 @@ class run_GUI(GUI.GUI):
 
     def gantry_vertical_set_rel_click(self):
         s = self.ent_gnt_ver_rel.get()
-        # logging.info('child-->'+s)
+        # logger.info('child-->'+s)
         if (is_float(s) == True):
-            #logging.info("----------MOVE Relative-----------------")
+            #logger.info("----------MOVE Relative-----------------")
             speed = 15.0;	
             acceleration = 1.0#
             rel_pos =int(s)
@@ -359,16 +377,16 @@ class run_GUI(GUI.GUI):
             self.motors.set_POSOKLIM(1)
             self.motors.move_relative_position(rel_pos, speed, acceleration)
         else:
-            logging.info("Not a number. Please enter an integer for VG rel. position")
+            logger.info("Not a number. Please enter an integer for VG rel. position")
 
 
 
     def gantry_vertical_set_abs_click(self):
 
         s = self.ent_gnt_ver_abs.get()
-        # logging.info('child-->'+s)
+        # logger.info('child-->'+s)
         if (is_float(s) == True):
-            #logging.info("----------MOVE Absolute-----------------")
+            #logger.info("----------MOVE Absolute-----------------")
             speed = 15.0;	
             acceleration = 1.0#
             abs_pos =int(s)
@@ -376,11 +394,11 @@ class run_GUI(GUI.GUI):
             self.motors.set_POSOKLIM(1)
             self.motors.move_absolute_position(abs_pos, speed, acceleration)
         else:
-            logging.info("Not a number. Please enter an integer for VG abs. position")        
+            logger.info("Not a number. Please enter an integer for VG abs. position")        
         
 
     def Init__motors_all_axes(self):
-        logging.info("Initializing motors .....")        
+        logger.info("Initializing motors .....")        
         # self.motors = Motor_VG.motor_Linear(self.TECHNOSOFT_PORT.encode('ascii'),
         #                                       self.GANTRY_VER_AXIS_ID, b"LEFS25") 
 
@@ -390,8 +408,8 @@ class run_GUI(GUI.GUI):
         self.motors = Motors(com_port, self.AXIS_ID_01, self.AXIS_ID_02, primary_axis)   
         #/*	Setup and initialize the axis */	
         if (self.motors.InitAxis()==False):
-            logging.error("Failed to start up the Technosoft drive")    
-        logging.info("\tMotors are Initialized")        
+            logger.error("Failed to start up the Technosoft drive")    
+        logger.info("\tMotors are Initialized")        
 
 
         self.motors.select_axis(self.AXIS_ID_02)
@@ -408,9 +426,9 @@ class run_GUI(GUI.GUI):
 
     def InitMixerMotor(self):
         # # #------ init. motor 1
-        # # logging.info("Initializing Motors.....")
+        # # logger.info("Initializing Motors.....")
         # # self.motor1 = Motor1.motor_1(0,1.5)
-        # # logging.info("\tMotors Initialized")
+        # # logger.info("\tMotors Initialized")
 
         # #------ init. motors: Gantry vertical 
         pass
@@ -418,21 +436,21 @@ class run_GUI(GUI.GUI):
 
     def tec_b_tmpset_click(self):        
         s =   self.ent_tmp.get()
-        logging.info("TEC Controller new target tmp: {}".format(s))
+        logger.info("TEC Controller new target tmp: {}".format(s))
         if (is_float(s) == True):
-            # logging.info(s)
+            # logger.info(s)
             self.mc.set_temp(float(s))
         else:
-            logging.error("invalid input")
+            logger.error("invalid input")
 
 
     def tec_b_start_click(self):
-        logging.info("TEC Controller Enabled")
+        logger.info("TEC Controller Enabled")
         self.mc.enable()
         pass
 
     def tec_b_stop_click(self):
-        logging.info("TEC Controller Disabled")
+        logger.info("TEC Controller Disabled")
         self.mc.disable()
         pass
 
@@ -440,18 +458,18 @@ class run_GUI(GUI.GUI):
     def checkComboCfg1(self, event):
         # def option_selected(event):
         s = self.comboCfg1.get()
-        logging.info('child :{}'.format( s))
+        logger.info('child :{}'.format( s))
         ss=s.partition(')')
         # index = self.comboCfg1.get(0, "end") 
         index = ss[0]
-        logging.info('int number:{}'.format( int(index)))        
-        # logging.info("INDEX = ", index)
+        logger.info('int number:{}'.format( int(index)))        
+        # logger.info("INDEX = ", index)
         self.pump_scale_factor(int(index))
         if (self.microstep == False):
-            logging.info('mircostep off')
+            logger.info('mircostep off')
             self.set_step_mode(False)            
         else:  #self.microstep = True
-            logging.info('mircostep on')
+            logger.info('mircostep on')
             self.set_step_mode(True)
             
 
@@ -460,15 +478,15 @@ class run_GUI(GUI.GUI):
 
     def checkComboCfg2(self, event):
         # def option_selected(event):
-        logging.info('child:{}'.format( self.comboCfg1.get()))
+        logger.info('child:{}'.format( self.comboCfg1.get()))
 
 
     def m1_b_abs_pos_click(self):
-        logging.info("child: m1_new_spd")
+        logger.info("child: m1_new_spd")
         s =   self.ent_m1_spd_.get()
-        logging.info(s)
+        logger.info(s)
         if (is_float(s) == True):
-            logging.info('it\'s a number:{}'.format( float(s)))
+            logger.info('it\'s a number:{}'.format( float(s)))
             # m1_speed = float(s)
 
             self.motors.select_axis(self.AXIS_ID_01)
@@ -476,33 +494,33 @@ class run_GUI(GUI.GUI):
             acceleration = 1
             self.motors.set_speed(speed,acceleration)       
         else:
-            logging.warning("Not a number. Plaese enter an integer for speed.")
+            logger.warning("Not a number. Plaese enter an integer for speed.")
             
     
     # def p1_b_Zinit_click(self):
-    #      logging.info("child: p1 Z initialized")
+    #      logger.info("child: p1 Z initialized")
     #      self.pump1.pump_Zinit(1)
 
     # def p1_b_Yinit_click(self):
-    #      logging.info("child: p1 Y initialized")
+    #      logger.info("child: p1 Y initialized")
     #      self.pump1.pump_Yinit(1)
 
 
     # def p1_b_abs_pos_click(self):
-    #     logging.info("----> p1_abs pos")
+    #     logger.info("----> p1_abs pos")
     #     s =   self.ent_abs_pos.get()
-    #     logging.info(s)
+    #     logger.info(s)
     #     self.p1_cur_pos["text"]=  s
 
 
     def p1_b_abs_pos_click(self):
-        # logging.info("child: p1_abs pos")
+        # logger.info("child: p1_abs pos")
         s =   self.ent_abs_pos.get()
-        # logging.info(s)
+        # logger.info(s)
         if (is_float(s) == True):
             val = int(s)
             abs_pos = int(val * self.scalefactor)
-            # logging.info('position is:{}'.format(abs_pos))
+            # logger.info('position is:{}'.format(abs_pos))
             self.pump1.set_pos_absolute(1, abs_pos)
             ####===============to be moved to the timer thread
             # time.sleep(.25)
@@ -512,33 +530,33 @@ class run_GUI(GUI.GUI):
 
 
     def p1_b_pickup_pos_click(self):
-        logging.info("child: p1_pickup ")
+        logger.info("child: p1_pickup ")
         s =   self.ent_pickup_pos.get()
         if (is_float(s) == True):
             val = int(s)
-            logging.info(int(s))
+            logger.info(int(s))
             rel_pos = int(val * self.scalefactor)            
             self.pump1.set_pickup(1, rel_pos)
 
 
     def p1_b_dispense_pos_click(self):
-        logging.info("child: p1_dispense ")
+        logger.info("child: p1_dispense ")
         s =   self.ent_dispemse_pos.get()
         if (is_float(s) == True):
             val = int(s)
-            logging.info(int(s))
+            logger.info(int(s))
             rel_pos = int(val * self.scalefactor)            
             self.pump1.set_dispense(1,rel_pos)
 
 
     def p1_b_teminateP1(self):
-        logging.info('child: termnate p1')
+        logger.info('child: termnate p1')
         self.pump1.stop(1)
 
 
 
     def p1_b_dispenseUntillbubble(self):
-        logging.info(' dispense until bubble: to be completed later')
+        logger.info(' dispense until bubble: to be completed later')
         # self.pump1.set_speed(1,1000)
         # time.sleep(1)
         # self.pump1.set_pos_absolute(1, 0)
@@ -551,7 +569,7 @@ class run_GUI(GUI.GUI):
         input0 = (self.labjack.getAIN(0))
         while (input0>2.5):
             input0 = (self.labjack.getAIN(0))
-            print('----------------',input, 'position:', self.pump1.get_plunger_position(1))
+            logger.info('----------------{}    position:'.format(input, self.pump1.get_plunger_position(1)))
             time.sleep(1)
         self.pump1.stop(1)
 
@@ -560,55 +578,55 @@ class run_GUI(GUI.GUI):
 
 
     def p1_b_pickupUntillbubble(self):
-        logging.info("child: pickup until bubble")
+        logger.info("child: pickup until bubble")
         # send pump1 to 0 position
         # self.pump1.set_pos_absolute(1, 0)
         prev_speed = self.pump1.get_peakspeed(1)
         print("==========>",prev_speed)
         # change to high speed for retraction
         if (self.microstep == False):
-            logging.info('micro step is off')
+            logger.info('micro step is off')
             self.pump1.set_speed(1,1000)
         else:
-            logging.info('micro step is on')
+            logger.info('micro step is on')
             self.pump1.set_speed(1,1000*8)
         print("1-----------------")
         time.sleep(.5)
         a =self.pump1.get_peakspeed(1)
         print("2-----------------")
         time.sleep(.5)
-        logging.info('setting peak speed to:{} and send pluger to home'.format( a))
+        logger.info('setting peak speed to:{} and send pluger to home'.format( a))
 
         self.pump1.set_pos_absolute(1, 0)
         # time.sleep(5)
 
         cur_pos = 24000
-        logging.info('going to 0 pos')
+        logger.info('going to 0 pos')
         while (cur_pos > 0):
-            # logging.info('cur pos:', cur_pos)
+            # logger.info('cur pos:', cur_pos)
             cur_pos = self.pump1.get_plunger_position(1)            
             time.sleep(1)
 
 
         # change to low speed for forward motion
         if (self.microstep == False):
-            logging.info('micro step is off')
+            logger.info('micro step is off')
             self.pump1.set_speed(1,48)
         else:
-            logging.info('micro step is on')
+            logger.info('micro step is on')
             self.pump1.set_speed(1,48*8)
 
-        logging.info('going to final pos')
+        logger.info('going to final pos')
         self.pump1.set_pos_absolute(1, 10000)
 
         # continue until a bubble detected or reaching end of travel
         input0 = (self.labjack.getAIN(0))
         while (input0>2.5):
             input0 = (self.labjack.getAIN(0))
-            logging.info('        selcted BS {}  , reading: {}'.format(self.BS,self.labjack.getAIN(self.BS-1)))
-            logging.info('bubble sensor output:{}'.format( input0))
+            logger.info('        selcted BS {}  , reading: {}'.format(self.BS,self.labjack.getAIN(self.BS-1)))
+            logger.info('bubble sensor output:{}'.format( input0))
             time.sleep(1)
-            logging.info('cur pos =={}'.format( cur_pos))
+            logger.info('cur pos =={}'.format( cur_pos))
             cur_pos = self.pump1.get_plunger_position(1)            
 
         self.pump1.stop(1)
@@ -617,9 +635,9 @@ class run_GUI(GUI.GUI):
 
 
     def p1_b_top_spd_click(self):
-        logging.info("p1_top speed")
+        logger.info("p1_top speed")
         s =   self.ent_top_spd.get()
-        logging.info(s)
+        logger.info(s)
         if (is_float(s) == True):
             max_spd = int(s)
             self.pump1.set_speed(1,max_spd)
@@ -629,41 +647,41 @@ class run_GUI(GUI.GUI):
 
     def checkCombo1(self,event):
         s = self.combo1.get()
-        # logging.info('child -->'+s)
+        # logger.info('child -->'+s)
         # ("Pump to Air (P1)","Air to Gas (P2)","Gas to Line (P3)",
         #                          "Line to Pump (P4)")
         if (s == "Pump to Air (P1)"):
-            # logging.info(" P1   --- E ")
+            # logger.info(" P1   --- E ")
             new_valve_pos = 'E'
         elif (s == "Air to Gas (P2)"):
-            # logging.info(" P2 ---- O")
+            # logger.info(" P2 ---- O")
             new_valve_pos = 'O'
         elif (s == "Gas to Line (P3)"):
-            # logging.info(" P3 --- I")
+            # logger.info(" P3 --- I")
             new_valve_pos = 'I'
         elif (s == "Line to Pump (P4)"):
-            # logging.info(" P4 ---- B ")
+            # logger.info(" P4 ---- B ")
             new_valve_pos = 'B'
         else:
-            logging.info(' invalid valve selection')
+            logger.info(' invalid valve selection')
             new_valve_pos = 'E'
         self.pump1.set_valve(1, new_valve_pos)
         time.sleep(1)
         s = self.pump1.get_valve(1)
-        # logging.info("-----> ",s)
+        # logger.info("-----> ",s)
         cur_valve = "----"
         if (s=='e'):
             cur_valve = "Pump to Air (P1)"
-            # logging.info('EEEE')
+            # logger.info('EEEE')
         elif(s=='o'):
             cur_valve = "Air to Gas (P2)"
-            # logging.info('OOOO')
+            # logger.info('OOOO')
         elif(s=="i"):
             cur_valve = "Gas to Line (P3)"
-            # logging.info("IIII")
+            # logger.info("IIII")
         elif(s=="b"):
             cur_valve = "Line to Pump (P4)"
-            # logging.info("BBBB")
+            # logger.info("BBBB")
         else:
             cur_valve = "error"
 
@@ -679,42 +697,42 @@ class run_GUI(GUI.GUI):
     def checkCombo3(self, event):
         # print('parent-->'+self.combo3.get())
         s = self.combo3.get()
-        # logging.info('child -->'+s)
+        # logger.info('child -->'+s)
         # ("Pump to Air (P1)","Air to Gas (P2)","Gas to Line (P3)",
         #                          "Line to Pump (P4)")
         if (s == "Pump to Line (P1)"):
-            # logging.info(" P1   --- E ")
+            # logger.info(" P1   --- E ")
             new_valve_pos = 'E'
         elif (s == "Line to Gas (P2)"):
-            # logging.info(" P2 ---- O")
+            # logger.info(" P2 ---- O")
             new_valve_pos = 'O'
         elif (s == "Gas to Air (P3)"):
-            # logging.info(" P3 --- I")
+            # logger.info(" P3 --- I")
             new_valve_pos = 'I'
         elif (s == "Air to Pump (P4)"):
-            # logging.info(" P4 ---- B ")
+            # logger.info(" P4 ---- B ")
             new_valve_pos = 'B'
         else:
-            logging.info(' invalid valve selection')
+            logger.info(' invalid valve selection')
             new_valve_pos = 'E'
         self.pump1.set_valve(2, new_valve_pos)
         time.sleep(1)
         s = self.pump1.get_valve(2)
-        # logging.info("----->{}".format(s))
+        # logger.info("----->{}".format(s))
         # print(type(s))
         cur_valve = "----"
         if (s=='e'):
             cur_valve = "Pump to Line (P1)"
-            # logging.info('EEEE')
+            # logger.info('EEEE')
         elif(s=='o'):
             cur_valve = "Line to Gas (P2)"
-            # logging.info('OOOO')
+            # logger.info('OOOO')
         elif(s=="i"):
             cur_valve = "Gas to Air (P3)"
-            # logging.info("IIII")
+            # logger.info("IIII")
         elif(s=="b"):
             cur_valve = "Air to Pump (P4)"
-            # logging.info("BBBB")
+            # logger.info("BBBB")
         else:
             cur_valve = "error"
         # print('cur_valve:', cur_valve)
@@ -726,7 +744,7 @@ class run_GUI(GUI.GUI):
     def checkCombo5(self, event):
         # print('child-->'+self.combo5.get())
         s = self.combo5.get()
-        # logging.info('child -->'+s)
+        # logger.info('child -->'+s)
         # ("Pump to Air (P1)","Air to Gas (P2)","Gas to Line (P3)",
         #                          "Line to Pump (P4)")
         if (s == "Titrant Port (P1)"):
@@ -736,24 +754,24 @@ class run_GUI(GUI.GUI):
         elif (s == "Titrant Cannula(P3)"):
             vlv = 3
         else:
-            logging.info(' invalid valve selection')
+            logger.info(' invalid valve selection')
             vlv = 2
 
         self.pump1.set_multiwayvalve(4,vlv)
         time.sleep(1)
         s = self.pump1.get_valve(4)
-        # logging.info("----->{}".format(s))
+        # logger.info("----->{}".format(s))
         # print(type(s))
         cur_valve = "----"
         if (s=='1'):
             cur_valve = "Titr. Port (P1)"
-            # logging.info('EEEE')
+            # logger.info('EEEE')
         elif(s=='2'):
             cur_valve = "Reservoirs (P2)"
-            # logging.info('OOOO')
+            # logger.info('OOOO')
         elif(s=='3'):
             cur_valve = "Titr. Cann.(P3)"
-            # logging.info("IIII")
+            # logger.info("IIII")
         else:
             cur_valve = "error"
 
@@ -768,55 +786,55 @@ class run_GUI(GUI.GUI):
     def checkCombo9(self, event):
         # print('child-->'+self.combo9.get())   
         s = self.combo9.get()
-        # logging.info('child -->'+s)
+        # logger.info('child -->'+s)
         # ("Pump to Air (P1)","Air to Gas (P2)","Gas to Line (P3)",
         #                          "Line to Pump (P4)")
         if (s == "Air (P1)"):
-            # logging.info(" P1   --- E ")
+            # logger.info(" P1   --- E ")
             new_valve_pos = 1#'E'
         elif (s == "MeOH (P2)"):
-            # logging.info(" P2 ---- O")
+            # logger.info(" P2 ---- O")
             new_valve_pos = 2#'O'
         elif (s == "Detergent (P3)"):
-            # logging.info(" P3 --- I")
+            # logger.info(" P3 --- I")
             new_valve_pos = 3#'I'
         elif (s == "DI Water (P4)"):
-            # logging.info(" P4 ---- B ")
+            # logger.info(" P4 ---- B ")
             new_valve_pos = 4#'B'
         elif (s == "Waster (P5)"):
-            # logging.info(" P4 ---- B ")
+            # logger.info(" P4 ---- B ")
             new_valve_pos = 5#'B'
         elif (s == "Cleaning Port (P6)"):
-            # logging.info(" P4 ---- B ")
+            # logger.info(" P4 ---- B ")
             new_valve_pos = 6#'B'
         else:
-            logging.info(' invalid valve selection')
+            logger.info(' invalid valve selection')
             new_valve_pos = 1#'E'
         # self.pump1.set_valve(4, new_valve_pos)
         self.pump1.set_multiwayvalve(3,new_valve_pos)
         time.sleep(1)
         s = self.pump1.get_valve(3)
-        # logging.info("----->{}".format(s))
+        # logger.info("----->{}".format(s))
         # print(type(s))
         cur_valve = "----"
         if (s=='1'):
             cur_valve = "Air (P1)"
-            # logging.info('EEEE')
+            # logger.info('EEEE')
         elif(s=='2'):
             cur_valve = "MeOH (P2)"
-            # logging.info('OOOO')
+            # logger.info('OOOO')
         elif(s=="3"):
             cur_valve = "Detergent (P3)"
-            # logging.info("IIII")
+            # logger.info("IIII")
         elif(s=="4"):
             cur_valve = "DI Water (P4)"
-            # logging.info("BBBB")
+            # logger.info("BBBB")
         elif(s=="5"):
             cur_valve = "Waster (P5)"
-            # logging.info("BBBB")
+            # logger.info("BBBB")
         elif(s=="6"):
             cur_valve = "Clean. Port (P6)"
-            # logging.info("BBBB")                        
+            # logger.info("BBBB")                        
         else:
             cur_valve = "error"
         # print('cur_valve:', cur_valve)
@@ -828,7 +846,7 @@ class run_GUI(GUI.GUI):
         s = self.combo0.get()        
         ss=s.partition('S')
         index = int(ss[2])
-        logging.info('bubble sensor number:{}'.format(index))
+        logger.info('bubble sensor number:{}'.format(index))
         X3 = 1050
         Y1 = 100
         dY1 = 40
@@ -911,7 +929,7 @@ class run_GUI(GUI.GUI):
         s = self.combob1.get()        
         ss=s.partition('S')
         index = int(ss[2])
-        logging.info('bubble sensor number:', index)
+        logger.info('bubble sensor number:', index)
         X3 = 1050
         Y1 = 100
         dY1 = 40
@@ -993,10 +1011,10 @@ class run_GUI(GUI.GUI):
     def set_step_mode(self, flag):
 
         if (flag == False):
-            logging.info('switch to normal mode')
+            logger.info('switch to normal mode')
             self.pump1.set_microstep_position(1,0)
         else:
-            logging.info(" switched to p&v  ")
+            logger.info(" switched to p&v  ")
             self.pump1.set_microstep_position(1,2)
 
 
@@ -1045,11 +1063,11 @@ class run_GUI(GUI.GUI):
             self.microstep = True
             pass
         else:
-            logging.info("invalid scale factor")
+            logger.info("invalid scale factor")
             self.scalefactor = 1
 
         self.scalefactor = STEP_RANGE / VOLUME
-        logging.info('scale factor:{}'.format( self.scalefactor))
+        logger.info('scale factor:{}'.format( self.scalefactor))
 
 
 
